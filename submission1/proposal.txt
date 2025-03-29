@@ -2,6 +2,6 @@ Project title: Dungeons And Dragons Character Manager
 
 Group members:
 - Ian Scheetz
-
+-Alexander Burnett
 Proposal:
-The purpose of the database will be to store information on a set of Dungeons and Dragons characters. The database will contain information on each character including their health, level, abilities, and name of the player. Users for the database include the players and the organizer of the campaign. Functions the users would use include checking their character’s inventory and stats. The organizer would use the database to change character stats and remove characters when their health is zero.
+The purpose of the database will be to store information on a set of Dungeons and Dragons characters. The database will contain information on each character including their health, level, abilities, and name of the player. Users for the database include the players and the organizer of the campaign. Functions the users would use include checking their character’s inventory and stats. The organizer would use the database to change character stats and remove characters when their health is zero. Additional features include information cards that can be custom made and categorised and able to be made private or public to players by the game manager. players would be able to make their own private and public notes on seperate cards and in general categories.
