@@ -1,0 +1,116 @@
+CREATE TABLE Note(
+    id int(5) NOT NULL,
+    name varchar(255),
+    type enum,
+    text varchar(255),
+    PRIMARY KEY(ID)
+);
+
+CREATE TABLE Npc(
+    id int(5) NOT NULL,
+    note_id int(5),
+    role varchar(255),
+    level int(2),
+    strength int(2),
+    dexterity int(2),
+    constitution int(2),
+    intelligence int(2),
+    wisdom int(2),
+    charisma int(2),
+    PRIMARY KEY(id),
+    FOREIGN KEY (note_id) REFERENCES Note(id)
+);
+
+CREATE TABLE Monster(
+    id int(5) NOT NULL,
+    note_id int(5),
+    type varchar(255),
+    level int(2),
+    strength int(2),
+    dexterity int(2),
+    constitution int(2),
+    intelligence int(2),
+    wisdom int(2),
+    charisma int(2),
+    PRIMARY KEY(id),
+    FOREIGN KEY (note_id) REFERENCES Note(id)
+);
+
+CREATE TABLE Character(
+    id int(5) NOT NULL,
+    note_id int(5),
+    class varchar(255),
+    race varchar(255),
+    level int(2),
+    strength int(2),
+    dexterity int(2),
+    constitution int(2),
+    intelligence int(2),
+    wisdom int(2),
+    charisma int(2),
+    PRIMARY KEY(id),
+    FOREIGN KEY (note_id) REFERENCES Note(id)
+);
+
+CREATE TABLE Spell(
+    id int(5) NOT NULL,
+    note_id int(5),
+    type varchar(255),
+    damage_type varchar(255),
+    damage varchar(255),
+    save varchar(255),
+    level int(2),
+    PRIMARY KEY(id),
+    FOREIGN KEY (note_id) REFERENCES Note(id)
+);
+
+CREATE TABLE Location(
+    id int(5) NOT NULL,
+    note_id int(5),
+    parent_loc_id int(5),
+    loc_type varchar(255),
+    PRIMARY KEY(id),
+    FOREIGN KEY (parent_loc_id) REFERENCES Location(id)
+);
+
+CREATE TABLE Feature(
+    id int(5) NOT NULL,
+    note_id int(5),
+    modifier_code varchar(255),
+    FOREIGN KEY (note_id) REFERENCES Note(id)
+);
+
+CREATE TABLE Character_Spell(
+    char_id int(5),
+    spell_id int(5),
+    FOREIGN KEY (char_id) REFERENCES Character(id),
+    FOREIGN KEY (spell_id) REFERENCES Spell(id)
+);
+
+CREATE TABLE Npc_Spell(
+    npc_id int(5),
+    spell_id int(5),
+    FOREIGN KEY (npc_id) REFERENCES Npc(id),
+    FOREIGN KEY (spell_id) REFERENCES Spell(id)
+);
+
+CREATE TABLE Character_Feature(
+    char_id int(5),
+    feature_id int(5),
+    FOREIGN KEY (char_id) REFERENCES Character(id),
+    FOREIGN KEY (feature_id) REFERENCES Feature(id)
+);
+
+CREATE TABLE Monster_Feature(
+    mon_id int(5),
+    feature_id int(5),
+    FOREIGN KEY (mon_id) REFERENCES Monster(id),
+    FOREIGN KEY (feature_id) REFERENCES Feature(id)
+);
+
+CREATE TABLE Npc_Feature(
+    npc_id int(5),
+    feature_id int(5),
+    FOREIGN KEY (npc_id) REFERENCES Monster(id),
+    FOREIGN KEY (feature_id) REFERENCES Feature(id)
+);
