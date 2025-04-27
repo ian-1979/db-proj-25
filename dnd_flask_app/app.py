@@ -249,14 +249,15 @@ def new_notecard():
         campaign_id = session['campaign_id']
         public = int(request.form.get('public', 0))
 
-        # Handle image upload (safe)
+        # Handle image upload
         image = request.files.get('image')
         note_image_path = None
         if image and image.filename != '':
             filename = secure_filename(image.filename)
-            if not os.path.exists(app.config['UPLOAD_FOLDER']):
-                os.makedirs(app.config['UPLOAD_FOLDER'])
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            upload_folder = app.config['UPLOAD_FOLDER']
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+            image_path = os.path.join(upload_folder, filename)
             image.save(image_path)
             note_image_path = f"/static/uploads/{filename}"
 
@@ -269,13 +270,13 @@ def new_notecard():
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (name, note_type, text, campaign_id, public, note_image_path))
 
-            mysql.connection.commit()  # 🔥 COMMIT NOW IMMEDIATELY
+            mysql.connection.commit()  # 🔥 Commit to get valid lastrowid
 
             note_id = cursor.lastrowid
             if not note_id:
-                raise Exception("Failed to get inserted notecard ID!")
+                raise Exception("Failed to retrieve inserted notecard ID!")
 
-            # Insert into related table if needed
+            # Insert into related tables if needed
             if note_type.lower() in ['character', 'monster', 'npc']:
                 race = request.form.get('race')
                 level = request.form.get('level') or request.form.get('cr')
@@ -289,7 +290,7 @@ def new_notecard():
 
                 if race and level:
                     cursor.execute("""
-                        INSERT INTO entity (id, race, level, class, strength, dexterity, constitution, intelligence, wisdom, charisma)
+                        INSERT INTO entity (note_id, race, level, class, strength, dexterity, constitution, intelligence, wisdom, charisma)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, (note_id, race, level, char_class, strength, dexterity, constitution, intelligence, wisdom, charisma))
 
@@ -303,7 +304,7 @@ def new_notecard():
 
                 if spell_level and school:
                     cursor.execute("""
-                        INSERT INTO spell (id, level, school, description, damage_type, damage, save)
+                        INSERT INTO spells (note_id, level, school, spell_text, damage_type, damage, save)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """, (note_id, spell_level, school, spell_description, damage_type, damage, save))
 
@@ -312,8 +313,8 @@ def new_notecard():
 
                 if location_type:
                     cursor.execute("""
-                        INSERT INTO location (id, location_type)
-                        VALUES (%s, %s)
+                        INSERT INTO location (note_id, location_type)
+                        VALUES (%s)
                     """, (note_id, location_type))
 
             mysql.connection.commit()  # 🔥 Final commit after all inserts
@@ -321,17 +322,20 @@ def new_notecard():
         except Exception as e:
             print("Error during notecard creation:", e)
             mysql.connection.rollback()
-            # Optional: if image was saved but DB insert failed, delete the file
+
+            # Optional: clean up uploaded image if insert failed
             if note_image_path:
                 try:
                     os.remove(image_path)
                 except Exception as remove_error:
                     print("Error cleaning up image file:", remove_error)
+
             cursor.close()
             return "Database error creating notecard.", 500
 
         cursor.close()
         return redirect('/notecards')
+
 
 
 
