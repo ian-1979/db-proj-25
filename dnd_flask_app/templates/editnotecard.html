@@ -1,0 +1,36 @@
+{% extends 'include/layout.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Edit Notecard</h2>
+  <form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-control" name="name" value="{{ card[1] }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Type</label>
+      <select name="type" class="form-select" required>
+        <option value="">-- Select a Type --</option>
+        <option value="character" {% if card[2] == 'character' %}selected{% endif %}>Character</option>
+        <option value="monster" {% if card[2] == 'monster' %}selected{% endif %}>Monster</option>
+        <option value="npc" {% if card[2] == 'npc' %}selected{% endif %}>NPC</option>
+        <option value="location" {% if card[2] == 'location' %}selected{% endif %}>Location</option>
+        <option value="spell" {% if card[2] == 'spell' %}selected{% endif %}>Spell</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Description</label>
+      <textarea class="form-control" name="text" rows="4">{{ card[3] }}</textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Upload New Image (optional)</label>
+      <input class="form-control" type="file" name="image" accept="image/*">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+  </form>
+</div>
+{% endblock %}

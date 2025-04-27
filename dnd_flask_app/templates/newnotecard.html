@@ -1,9 +1,12 @@
 {% extends 'include/layout.html' %}
 {% block content %}
 
-<div class="container">
+<div class="container mt-5">
   <h2 class="mb-4">Create a New Notecard</h2>
-  <form action="/newnotecard" method="POST">
+
+  <form action="/newnotecard" method="POST" enctype="multipart/form-data">
+    <p>DEBUG: New Notecard Page Loaded</p>
+    <!-- Base Fields -->
     <div class="mb-3">
       <label for="name" class="form-label">Notecard Name</label>
       <input type="text" class="form-control" name="name" id="name" required>
@@ -17,13 +20,18 @@
         <option value="monster">Monster</option>
         <option value="npc">NPC</option>
         <option value="location">Location</option>
-        <option value="Spell">Spell</option>
+        <option value="spell">Spell</option>
       </select>
     </div>
 
     <div class="mb-3">
       <label for="text" class="form-label">Description</label>
       <textarea name="text" class="form-control" id="text" rows="3" placeholder="Optional backstory or details..."></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="image" class="form-label">Upload Image (optional)</label>
+      <input type="file" class="form-control" name="image" id="image" accept="image/*">
     </div>
 
     <div class="form-check mb-3">
@@ -33,8 +41,126 @@
       </label>
     </div>
 
-    <button type="submit" class="btn btn-success">Create Notecard</button>
-  </form>
-</div>
+    <!-- Extra Fields (Initially Hidden) -->
+    <div id="extra-fields" style="display: none;">
+      
+      <!-- Character Fields -->
+      <div id="character-fields" class="extra-type" style="display: none;">
+        <h5 class="mt-4">Character Details</h5>
+        <div class="mb-3">
+          <label class="form-label">Race</label>
+          <input type="text" class="form-control" name="race" >
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Level</label>
+          <input type="number" class="form-control" name="level" min="1" max="20">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Class (optional)</label>
+          <input type="text" class="form-control" name="class">
+        </div>
+        {% include 'include/stats_fields.html' %}
+      </div>
+
+      <!-- Monster Fields -->
+      <div id="monster-fields" class="extra-type" style="display: none;">
+        <h5 class="mt-4">Monster Details</h5>
+        <div class="mb-3">
+          <label class="form-label">Challenge Rating (CR)</label>
+          <input type="number" step="0.1" class="form-control" name="cr">
+        </div>
+        {% include 'include/stats_fields.html' %}
+      </div>
+
+      <!-- NPC Fields -->
+      <div id="npc-fields" class="extra-type" style="display: none;">
+        <h5 class="mt-4">NPC Details</h5>
+        <div class="mb-3">
+          <label class="form-label">Race</label>
+          <input type="text" class="form-control" name="race">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Level (optional CR)</label>
+          <input type="number" class="form-control" name="cr">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Class (optional)</label>
+          <input type="text" class="form-control" name="class">
+        </div>
+        {% include 'include/stats_fields.html' %}
+      </div>
+
+      <!-- Spell Fields -->
+      <div id="spell-fields" class="extra-type" style="display: none;">
+        <h5 class="mt-4">Spell Details</h5>
+        <div class="mb-3">
+          <label class="form-label">Level</label>
+          <input type="number" min="0" max="9" class="form-control" name="spell_level">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">School</label>
+          <input type="text" class="form-control" name="school">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description Text</label>
+          <textarea class="form-control" name="spell_description"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Damage Type (optional)</label>
+          <input type="text" class="form-control" name="damage_type">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Damage (optional)</label>
+          <input type="text" class="form-control" name="damage">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Save (optional)</label>
+          <input type="text" class="form-control" name="save">
+        </div>
+      </div>
+
+      <!-- Location Fields -->
+      <div id="location-fields" class="extra-type" style="display: none;">
+        <h5 class="mt-4">Location Details</h5>
+        <div class="mb-3">
+          <label class="form-label">Location Type</label>
+          <input type="text" class="form-control" name="location_type">
+        </div>
+      </div>
+
+    </div> <!-- End of Extra Fields -->
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-success mt-4">Create Notecard</button>
+
+  </form> <!-- Properly closing the form AFTER everything -->
+
+  <!-- JavaScript for dynamic field display -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      var typeSelect = document.getElementById('type');
+      if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+          var allFields = document.querySelectorAll('.extra-type');
+          allFields.forEach(function(div) {
+            div.style.display = 'none';
+          });
+    
+          var extraFields = document.getElementById('extra-fields');
+          if (this.value) {
+            extraFields.style.display = 'block';
+            var selected = document.getElementById(this.value.toLowerCase() + '-fields');
+            if (selected) {
+              selected.style.display = 'block';
+            }
+          } else {
+            extraFields.style.display = 'none';
+          }
+        });
+      }
+    });
+    </script>
+
+</div> <!-- container -->
 
 {% endblock %}

@@ -1,14 +1,15 @@
 # Note: right now functions are NOT implemented how we wrote them for our second
 #       deliverable in the SQL queries part. Need to change.
 
-
+import os
 #! /usr/bin/python3
 from flask import Flask, render_template, request, redirect, session, url_for
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
-
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.secret_key = 'your_secret_key_here'  # Make this a random string in production
 
 # MySQL configuration
@@ -31,22 +32,23 @@ def show_notecards():
         return redirect('/selectcampaign')
 
     cursor = mysql.connection.cursor()
-    # If DM, show all cards in campaign
     if session.get('campaign_role') == 'dm':
         cursor.execute("""
-            SELECT id, name, type, text FROM notecard
+            SELECT id, name, type, text, note_image_path
+            FROM notecard
             WHERE campaign_id = %s
         """, (session['campaign_id'],))
     else:
-        # If player, show only public cards or private if tagged (this can be expanded later)
         cursor.execute("""
-            SELECT id, name, type, text FROM notecard
+            SELECT id, name, type, text, note_image_path
+            FROM notecard
             WHERE campaign_id = %s AND public = 1
         """, (session['campaign_id'],))
 
     data = cursor.fetchall()
     cursor.close()
     return render_template('notecards.html', data=data)
+
 
 
 # Search notecards by name or type
@@ -64,6 +66,51 @@ def notecard_search():
         cursor.close()
         return render_template('notecards.html', data=data)
 
+
+#edit notecard route
+@app.route('/editnotecard/<int:notecard_id>', methods=['GET', 'POST'])
+def edit_notecard(notecard_id):
+    if 'campaign_id' not in session:
+        return redirect('/selectcampaign')
+    if session.get('campaign_role') != 'dm':
+        return "Only DMs can edit notecards.", 403
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT id, name, type, text, note_image_path
+        FROM notecard
+        WHERE id = %s AND campaign_id = %s
+    """, (notecard_id, session['campaign_id']))
+    card = cursor.fetchone()
+    cursor.close()
+
+    if not card:
+        return "Notecard not found.", 404
+
+    if request.method == 'POST':
+        # Handle form updates (I'll expand this in next message if you want)
+
+        pass  # Placeholder: form handling will go here!
+
+    return render_template('editnotecard.html', card=card, extra=extra)
+
+
+
+@app.route('/deletenotecard/<int:notecard_id>')
+def delete_notecard(notecard_id):
+    if 'campaign_id' not in session:
+        return redirect('/selectcampaign')
+    if session.get('campaign_role') != 'dm':
+        return "Only DMs can delete notecards.", 403
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("DELETE FROM notecard WHERE id = %s AND campaign_id = %s", (notecard_id, session['campaign_id']))
+    mysql.connection.commit()
+    cursor.close()
+
+    return redirect('/notecards')
+
+    return render_template('editnotecard.html', card=card)
 
 
 
@@ -183,7 +230,7 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# Create a new notecard
+
 @app.route('/newnotecard', methods=['GET', 'POST'])
 def new_notecard():
     if 'campaign_id' not in session:
@@ -195,20 +242,84 @@ def new_notecard():
         return render_template('newnotecard.html')
 
     if request.method == 'POST':
+        if request.method == 'POST':
+            print("POST request received!")
         name = request.form['name']
         note_type = request.form['type']
         text = request.form['text']
-        campaign_id = session['campaign_id']  # <<--- THIS!
+        campaign_id = session['campaign_id']
         public = int(request.form.get('public', 0))
-        note_image_path = None  # Future: add images
+
+        # Handle image upload (safe)
+        image = request.files.get('image')
+        note_image_path = None
+        if image and image.filename != '':
+            filename = secure_filename(image.filename)
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            note_image_path = f"/static/uploads/{filename}"
+
+        # Insert into notecard table first
         cursor = mysql.connection.cursor()
         cursor.execute("""
             INSERT INTO notecard (name, type, text, campaign_id, public, note_image_path)
             VALUES (%s, %s, %s, %s, %s, %s)
         """, (name, note_type, text, campaign_id, public, note_image_path))
+        
+        note_id = cursor.lastrowid
+
+        # Insert into additional tables depending on type
+        if note_type.lower() in ['character', 'monster', 'npc']:
+            race = request.form.get('race')
+            level = request.form.get('level') or request.form.get('cr')  # npc/monster use CR
+            char_class = request.form.get('class')
+            strength = request.form.get('strength')
+            dexterity = request.form.get('dexterity')
+            constitution = request.form.get('constitution')
+            intelligence = request.form.get('intelligence')
+            wisdom = request.form.get('wisdom')
+            charisma = request.form.get('charisma')
+
+            # Only insert if race and level (or cr) exist
+            if race and level:
+                cursor.execute("""
+                    INSERT INTO entity (entity_id, race, level, class, strength, dexterity, constitution, intelligence, wisdom, charisma)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (note_id, race, level, char_class, strength, dexterity, constitution, intelligence, wisdom, charisma))
+
+        elif note_type.lower() == 'spell':
+            spell_level = request.form.get('spell_level')
+            school = request.form.get('school')
+            spell_description = request.form.get('spell_description')
+            damage_type = request.form.get('damage_type')
+            damage = request.form.get('damage')
+            save = request.form.get('save')
+
+            # Only insert if spell_level and school exist
+            if spell_level and school:
+                cursor.execute("""
+                    INSERT INTO spell (spell_id, level, school, description, damage_type, damage, save)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (note_id, spell_level, school, spell_description, damage_type, damage, save))
+
+        elif note_type.lower() == 'location':
+            location_type = request.form.get('location_type')
+
+            # Only insert if location_type exists
+            if location_type:
+                cursor.execute("""
+                    INSERT INTO location (location_id, location_type)
+                    VALUES (%s, %s)
+                """, (note_id, location_type))
+
+        # Finalize
         mysql.connection.commit()
         cursor.close()
+
         return redirect('/notecards')
+
+
 
 #select campaign directly
 @app.route('/selectcampaigndirect/<int:campaign_id>')
@@ -267,4 +378,5 @@ def add_player(campaign_id):
     return render_template('addplayer.html', campaign_id=campaign_id)
 
 if __name__ == '__main__':
+    app.config['PROPAGATE_EXCEPTIONS'] = True
     app.run(debug=True)

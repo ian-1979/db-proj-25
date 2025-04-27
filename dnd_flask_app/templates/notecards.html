@@ -5,17 +5,25 @@
   <h2 class="mb-4">Notecards</h2>
 
   {% if data %}
-  <div class="list-group">
+  <div class="row row-cols-1 row-cols-md-2 g-4">
     {% for card in data %}
-    <div class="list-group-item">
-      <h5 class="mb-1">{{ card[1] }} ({{ card[2] }})</h5>
-      <p class="mb-1">{{ card[3] }}</p>
+    <div class="col">
+      <div class="card h-100">
+        {% if card[4] %}
+        <img src="{{ card[4] }}" class="card-img-top" alt="Notecard Image">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ card[1] }} ({{ card[2] }})</h5>
+          <p class="card-text">{{ card[3] }}</p>
+        </div>
+      </div>
     </div>
     {% endfor %}
   </div>
   {% else %}
   <p>No notecards found for this campaign.</p>
   {% endif %}
+
 </div>
 
 {% endblock %}
