@@ -93,7 +93,7 @@ def edit_notecard(notecard_id):
 
         pass  # Placeholder: form handling will go here!
 
-    return render_template('editnotecard.html', card=card, extra=extra)
+    return render_template('editnotecard.html', card=card)
 
 
 
@@ -145,16 +145,30 @@ def register():
         username = request.form['username']
         password = request.form['password']
         password_hash = generate_password_hash(password)
+        try:
+            cursor = mysql.connection.cursor()
+            cursor.execute("INSERT INTO user (username, password) VALUES (%s, %s)", (username, password_hash))
+            mysql.connection.commit()
 
-        cursor = mysql.connection.cursor()
-        cursor.execute("INSERT INTO user (username, password) VALUES (%s, %s)", (username, password_hash))
-        mysql.connection.commit()
-        cursor.close()
+            # Fetch the newly created user ID
+            cursor.execute("SELECT id FROM user WHERE username = %s", (username,))
+            user = cursor.fetchone()
+        except Exception as e:
+            print("Error during user registration:", e)
+            mysql.connection.rollback()
+            user = None
+            return render_template('register.html', error="User already exists.")
+        finally:
+            cursor.close()
 
-        return redirect('/login')
+        if user:
+            # Log the user in by setting session variables
+            session['user_id'] = user[0]
+            session['username'] = username
+
+            return redirect(url_for('index'))
 
     return render_template('register.html')
-
 
 
 
