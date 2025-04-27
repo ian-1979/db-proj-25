@@ -259,8 +259,9 @@ def edit_notecard(notecard_id):
                 if location_type:
                     cursor.execute("""
                         INSERT INTO location (note_id, location_type)
-                        VALUES (%s)
+                        VALUES (%s, %s)
                     """, (notecard_id, location_type))
+
 
             mysql.connection.commit()
             cursor.close()
@@ -347,7 +348,7 @@ def view_notecard(notecard_id):
         JOIN notecard_tag nt ON t.id = nt.tag_id
         WHERE nt.note_id = %s
     """, (notecard_id,))
-    tag = [row[0] for row in cursor.fetchall()]
+    tags = [row[0] for row in cursor.fetchall()]
 
     # Notes system
     cursor.execute("""
@@ -360,7 +361,7 @@ def view_notecard(notecard_id):
 
     cursor.close()
 
-    return render_template('viewnotecard.html', card=card, extra=extra, tag=tag, notes=notes)
+    return render_template('viewnotecard.html', card=card, extra=extra, tags=tags, notes=notes)
 
 @app.route('/addnotecardnote/<int:notecard_id>', methods=['POST'])
 def add_notecard_note(notecard_id):
@@ -380,15 +381,71 @@ def add_notecard_note(notecard_id):
 
 
 
+@app.route('/addtag/<int:notecard_id>', methods=['POST'])
+def add_tag(notecard_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+    if session.get('campaign_role') != 'dm':
+        return "Only DMs can add tags.", 403
+
+    tag_name = request.form['tag_name'].strip()
+
+    if not tag_name:
+        print("No tag_name provided.")
+        return redirect(f'/viewnotecard/{notecard_id}')
+
+    cursor = mysql.connection.cursor()
+
+    try:
+        print(f"Checking if tag '{tag_name}' exists...")
+        cursor.execute("SELECT id FROM tag WHERE name = %s", (tag_name,))
+        tag = cursor.fetchone()
+
+        if not tag:
+            print(f"Tag '{tag_name}' does not exist. Inserting new tag...")
+            cursor.execute("INSERT INTO tag (name) VALUES (%s)", (tag_name,))
+            mysql.connection.commit()
+            tag_id = cursor.lastrowid
+            print(f"Inserted new tag with id {tag_id}")
+        else:
+            tag_id = tag[0]
+            print(f"Found existing tag id {tag_id}")
+
+        # Now link it
+        cursor.execute("SELECT * FROM notecard_tag WHERE note_id = %s AND tag_id = %s", (notecard_id, tag_id))
+        existing_link = cursor.fetchone()
+
+        if not existing_link:
+            print(f"Linking tag id {tag_id} to notecard id {notecard_id}...")
+            cursor.execute("INSERT INTO notecard_tag (note_id, tag_id) VALUES (%s, %s)", (notecard_id, tag_id))
+            mysql.connection.commit()
+        else:
+            print(f"Link already exists between notecard id {notecard_id} and tag id {tag_id}")
+
+    except Exception as e:
+        print("Error during tag creation/linking:", e)
+        mysql.connection.rollback()
+
+    cursor.close()
+
+    return redirect(f'/viewnotecard/{notecard_id}')
+
+
+
+
+
+
 @app.route('/tagsearch/<string:tag>')
 def tag_search(tag):
     cursor = mysql.connection.cursor()
     cursor.execute("""
         SELECT n.id, n.name, n.type, n.text, n.note_image_path
         FROM notecard n
-        JOIN notecard_tag t ON n.id = t.note_id
-        WHERE t.tag = %s
+        JOIN notecard_tag nt ON n.id = nt.note_id
+        JOIN tag t ON t.id = nt.tag_id
+        WHERE t.name = %s
     """, (tag,))
+
     cards = cursor.fetchall()
 
     # No extras for now in search
@@ -519,6 +576,7 @@ def campaigns():
     """, (session['user_id'],))
     campaigns = cursor.fetchall()
     cursor.close()
+    print("Session info at /campaigns:", session)
 
     return render_template('campaigns.html', campaigns=campaigns)
 
@@ -614,7 +672,7 @@ def new_notecard():
                 if location_type:
                     cursor.execute("""
                         INSERT INTO location (note_id, location_type)
-                        VALUES (%s)
+                        VALUES (%s, %s)
                     """, (note_id, location_type))
 
             mysql.connection.commit()  # 🔥 Final commit after all inserts
@@ -667,9 +725,16 @@ def selectcampaigndirect(campaign_id):
 def add_player(campaign_id):
     if 'user_id' not in session:
         return redirect('/login')
-    if session.get('campaign_role') != 'dm':
-        return "Only DMs can add players.", 403
-    if session.get('campaign_id') != str(campaign_id):
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT role FROM user_campaign
+        WHERE user_id = %s AND campaign_id = %s
+    """, (session['user_id'], campaign_id))
+    access = cursor.fetchone()
+    cursor.close()
+
+    if not access or access[0] != 'dm':
         return "Access denied to this campaign.", 403
 
     if request.method == 'POST':
@@ -695,6 +760,7 @@ def add_player(campaign_id):
         return redirect('/campaigns')
 
     return render_template('addplayer.html', campaign_id=campaign_id)
+
 
 if __name__ == '__main__':
     app.config['PROPAGATE_EXCEPTIONS'] = True

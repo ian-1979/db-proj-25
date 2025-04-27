@@ -11,8 +11,24 @@
       <select name="campaign_id" id="campaign_id" class="form-select" required>
         <option value="">-- Select --</option>
         {% for campaign in campaigns %}
-        <option value="{{ campaign[0] }}">{{ campaign[1] }}</option>
+        <div class="list-group-item">
+        <h5>{{ campaign[1] }}</h5>
+
+        {% if campaign[2] %}
+        <p class="text-muted">{{ campaign[2] }}</p>
+        {% endif %}
+
+        <div class="mt-2">
+            <a class="btn btn-sm btn-primary me-2" href="/selectcampaigndirect/{{ campaign[0] }}">Enter Campaign</a>
+
+            {% if session.get('campaign_role') == 'dm' %}
+            <a class="btn btn-sm btn-secondary" href="/addplayer/{{ campaign[0] }}">Add Player</a>
+            {% endif %}
+        </div>
+        </div>
         {% endfor %}
+
+
       </select>
     </div>
     <button type="submit" class="btn btn-primary">Enter Campaign</button>
@@ -26,15 +42,21 @@
   {% if campaigns %}
   <div class="list-group">
     {% for campaign in campaigns %}
-    <a href="/selectcampaigndirect/{{ campaign[0] }}" class="list-group-item list-group-item-action">
-      <h5>{{ campaign[1] }}</h5>
-      {% if campaign[2] %}
-      <p class="text-muted">{{ campaign[2] }}</p>
-      {% endif %}
-      {% if session.get('campaign_role') == 'dm' and session.get('campaign_id') == campaign[0]|string %}
-      <a class="btn btn-sm btn-secondary mt-2" href="/addplayer/{{ campaign[0] }}">Add Player</a>
-      {% endif %}
-    </a>
+    <div class="list-group-item">
+        <h5>{{ campaign[1] }}</h5>
+
+        {% if campaign[2] %}
+        <p class="text-muted">{{ campaign[2] }}</p>
+        {% endif %}
+
+        <div class="mt-2">
+            <a class="btn btn-sm btn-primary me-2" href="/selectcampaigndirect/{{ campaign[0] }}">Enter Campaign</a>
+
+            {% if session.get('campaign_role') == 'dm' %}
+            <a class="btn btn-sm btn-secondary" href="/addplayer/{{ campaign[0] }}">Add Player</a>
+            {% endif %}
+        </div>
+    </div>
     {% endfor %}
   </div>
   {% else %}
