@@ -46,9 +46,46 @@ def show_notecards():
             WHERE campaign_id = %s AND public = 1
         """, (session['campaign_id'],))
 
-    data = cursor.fetchall()
+    cards = cursor.fetchall()
+
+    # NEW: Build extra info mapping separately
+    extras = {}
+
+    for card in cards:
+        card_id, name, type_, text, image = card
+        extra = {}
+
+        if type_.lower() in ['character', 'monster', 'npc']:
+            cursor.execute("SELECT race, level, class FROM entity WHERE note_id = %s", (card_id,))
+            entity = cursor.fetchone()
+            if entity:
+                extra = {
+                    'Race': entity[0],
+                    'Level': entity[1],
+                    'Class': entity[2]
+                }
+        elif type_.lower() == 'spell':
+            cursor.execute("SELECT level, school, spell_text FROM spells WHERE note_id = %s", (card_id,))
+            spell = cursor.fetchone()
+            if spell:
+                extra = {
+                    'Spell Level': spell[0],
+                    'School': spell[1],
+                    'Spell Text': spell[2]
+                }
+        elif type_.lower() == 'location':
+            cursor.execute("SELECT location_type FROM location WHERE note_id = %s", (card_id,))
+            location = cursor.fetchone()
+            if location:
+                extra = {'Location Type': location[0]}
+
+        if extra:
+            extras[card_id] = extra
+
     cursor.close()
-    return render_template('notecards.html', data=data)
+    return render_template('notecards.html', data=cards, extras=extras)
+
+
 
 
 
@@ -78,22 +115,285 @@ def edit_notecard(notecard_id):
 
     cursor = mysql.connection.cursor()
     cursor.execute("""
+        SELECT id, name, type, text, note_image_path, public
+        FROM notecard
+        WHERE id = %s AND campaign_id = %s
+    """, (notecard_id, session['campaign_id']))
+    card_data = cursor.fetchone()
+
+    if not card_data:
+        cursor.close()
+        return "Notecard not found.", 404
+
+    card = {
+        'id': card_data[0],
+        'name': card_data[1],
+        'type': card_data[2],
+        'text': card_data[3],
+        'note_image_path': card_data[4],
+        'public': bool(card_data[5])
+    }
+
+    # Now: Load Extra fields depending on Type
+    extra = {}
+
+    if card['type'] in ['character', 'monster', 'npc']:
+        cursor.execute("""
+            SELECT race, level, class, strength, dexterity, constitution, intelligence, wisdom, charisma
+            FROM entity
+            WHERE note_id = %s
+        """, (notecard_id,))
+        entity = cursor.fetchone()
+        if entity:
+            extra = {
+                'race': entity[0],
+                'level': entity[1],
+                'class': entity[2],
+                'strength': entity[3],
+                'dexterity': entity[4],
+                'constitution': entity[5],
+                'intelligence': entity[6],
+                'wisdom': entity[7],
+                'charisma': entity[8],
+            }
+
+    elif card['type'] == 'spell':
+        cursor.execute("""
+            SELECT level, school, spell_text, damage_type, damage, save
+            FROM spells
+            WHERE note_id = %s
+        """, (notecard_id,))
+        spell = cursor.fetchone()
+        if spell:
+            extra = {
+                'spell_level': spell[0],
+                'school': spell[1],
+                'spell_text': spell[2],
+                'damage_type': spell[3],
+                'damage': spell[4],
+                'save': spell[5]
+            }
+
+    elif card['type'] == 'location':
+        cursor.execute("""
+            SELECT location_type
+            FROM location
+            WHERE note_id = %s
+        """, (notecard_id,))
+        location = cursor.fetchone()
+        if location:
+            extra = {
+                'location_type': location[0]
+            }
+
+    cursor.close()
+
+    if request.method == 'POST':
+        name = request.form['name']
+        note_type = request.form['type']
+        text = request.form['text']
+        public = int(request.form.get('public', 0))
+
+        # Handle image upload
+        image = request.files.get('image')
+        note_image_path = card['note_image_path']  # Default to existing
+        if image and image.filename != '':
+            filename = secure_filename(image.filename)
+            upload_folder = app.config['UPLOAD_FOLDER']
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+            image_path = os.path.join(upload_folder, filename)
+            image.save(image_path)
+            note_image_path = f"/static/uploads/{filename}"
+
+        cursor = mysql.connection.cursor()
+
+        try:
+            # Update notecard table
+            cursor.execute("""
+                UPDATE notecard
+                SET name = %s, type = %s, text = %s, note_image_path = %s, public = %s
+                WHERE id = %s AND campaign_id = %s
+            """, (name, note_type, text, note_image_path, public, notecard_id, session['campaign_id']))
+
+            # Delete old type-specific records (simpler and safer)
+            cursor.execute("DELETE FROM entity WHERE note_id = %s", (notecard_id,))
+            cursor.execute("DELETE FROM spells WHERE note_id = %s", (notecard_id,))
+            cursor.execute("DELETE FROM location WHERE note_id = %s", (notecard_id,))
+
+            # Re-insert new type-specific data
+            if note_type.lower() in ['character', 'monster', 'npc']:
+                race = request.form.get('race')
+                level = request.form.get('level') or request.form.get('cr')
+                char_class = request.form.get('class')
+                strength = request.form.get('strength')
+                dexterity = request.form.get('dexterity')
+                constitution = request.form.get('constitution')
+                intelligence = request.form.get('intelligence')
+                wisdom = request.form.get('wisdom')
+                charisma = request.form.get('charisma')
+
+                if race and level:
+                    cursor.execute("""
+                        INSERT INTO entity (note_id, race, level, class, strength, dexterity, constitution, intelligence, wisdom, charisma)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (notecard_id, race, level, char_class, strength, dexterity, constitution, intelligence, wisdom, charisma))
+
+            elif note_type.lower() == 'spell':
+                spell_level = request.form.get('spell_level')
+                school = request.form.get('school')
+                spell_description = request.form.get('spell_description')
+                damage_type = request.form.get('damage_type')
+                damage = request.form.get('damage')
+                save = request.form.get('save')
+
+                if spell_level and school:
+                    cursor.execute("""
+                        INSERT INTO spells (note_id, level, school, spell_text, damage_type, damage, save)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """, (notecard_id, spell_level, school, spell_description, damage_type, damage, save))
+
+            elif note_type.lower() == 'location':
+                location_type = request.form.get('location_type')
+
+                if location_type:
+                    cursor.execute("""
+                        INSERT INTO location (note_id, location_type)
+                        VALUES (%s)
+                    """, (notecard_id, location_type))
+
+            mysql.connection.commit()
+            cursor.close()
+
+        except Exception as e:
+            print("Error during notecard update:", e)
+            mysql.connection.rollback()
+            cursor.close()
+            return "Database error updating notecard.", 500
+
+        return redirect('/notecards')
+
+
+    return render_template('editnotecard.html', card=card, extra=extra)
+
+
+
+@app.route('/viewnotecard/<int:notecard_id>')
+def view_notecard(notecard_id):
+    if 'campaign_id' not in session:
+        return redirect('/selectcampaign')
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
         SELECT id, name, type, text, note_image_path
         FROM notecard
         WHERE id = %s AND campaign_id = %s
     """, (notecard_id, session['campaign_id']))
     card = cursor.fetchone()
-    cursor.close()
 
     if not card:
+        cursor.close()
         return "Notecard not found.", 404
 
-    if request.method == 'POST':
-        # Handle form updates (I'll expand this in next message if you want)
+    # Load Extra Fields
+    extra = {}
+    cursor.execute("""
+        SELECT race, level, class, strength, dexterity, constitution, intelligence, wisdom, charisma
+        FROM entity WHERE note_id = %s
+    """, (notecard_id,))
+    entity = cursor.fetchone()
+    if entity:
+        extra.update({
+            'Race': entity[0],
+            'Level': entity[1],
+            'Class': entity[2],
+            'Strength': entity[3],
+            'Dexterity': entity[4],
+            'Constitution': entity[5],
+            'Intelligence': entity[6],
+            'Wisdom': entity[7],
+            'Charisma': entity[8],
+        })
 
-        pass  # Placeholder: form handling will go here!
+    cursor.execute("""
+        SELECT level, school, spell_text, damage_type, damage, save
+        FROM spells WHERE note_id = %s
+    """, (notecard_id,))
+    spell = cursor.fetchone()
+    if spell:
+        extra.update({
+            'Spell Level': spell[0],
+            'School': spell[1],
+            'Spell Text': spell[2],
+            'Damage Type': spell[3],
+            'Damage': spell[4],
+            'Save': spell[5],
+        })
 
-    return render_template('editnotecard.html', card=card, extra=extra)
+    cursor.execute("""
+        SELECT location_type
+        FROM location WHERE note_id = %s
+    """, (notecard_id,))
+    location = cursor.fetchone()
+    if location:
+        extra.update({
+            'Location Type': location[0],
+        })
+
+    # Tags system (later attach real tags)
+    cursor.execute("""
+        SELECT t.name
+        FROM tag t
+        JOIN notecard_tag nt ON t.id = nt.tag_id
+        WHERE nt.note_id = %s
+    """, (notecard_id,))
+    tag = [row[0] for row in cursor.fetchall()]
+
+    # Notes system
+    cursor.execute("""
+        SELECT u.username, n.note_text
+        FROM user_note n
+        JOIN user u ON n.user_id = u.id
+        WHERE n.note_id = %s
+    """, (notecard_id,))
+    notes = cursor.fetchall()
+
+    cursor.close()
+
+    return render_template('viewnotecard.html', card=card, extra=extra, tag=tag, notes=notes)
+
+@app.route('/addnotecardnote/<int:notecard_id>', methods=['POST'])
+def add_notecard_note(notecard_id):
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    note_text = request.form['note_text']
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        INSERT INTO user_note (note_id, user_id, note_text)
+        VALUES (%s, %s, %s)
+    """, (notecard_id, session['user_id'], note_text))
+    mysql.connection.commit()
+    cursor.close()
+
+    return redirect(f'/viewnotecard/{notecard_id}')
+
+
+
+@app.route('/tagsearch/<string:tag>')
+def tag_search(tag):
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT n.id, n.name, n.type, n.text, n.note_image_path
+        FROM notecard n
+        JOIN notecard_tag t ON n.id = t.note_id
+        WHERE t.tag = %s
+    """, (tag,))
+    cards = cursor.fetchall()
+
+    # No extras for now in search
+    extras = {}
+    return render_template('notecards.html', data=cards, extras=extras)
 
 
 
