@@ -7,18 +7,28 @@
   <form method="POST">
     <div class="mb-3">
       <label for="campaign_id" class="form-label">Available Campaigns</label>
-      <select name="campaign_id" id="campaign_id" class="form-select" required>
+      <select name="campaign_id" id="campaign_id" class="form-select" required onchange="toggleEnterButton()">
         <option value="">-- Select --</option>
         {% for campaign in campaigns %}
         <option value="{{ campaign[0] }}">{{ campaign[1] }}</option>
         {% endfor %}
       </select>
     </div>
-    <button type="submit" class="btn btn-primary">Enter Campaign</button>
+    <button type="submit" id="enterButton" class="btn btn-primary" disabled>Enter Campaign</button>
   </form>
   {% else %}
   <p>You are not part of any campaigns yet.</p>
   {% endif %}
-
+  
+  <a href="/campaigns" class="btn btn-success mt-5z">View or Create a Campaign</a>
 </div>
+
+<script>
+  function toggleEnterButton() {
+    const selectElement = document.getElementById('campaign_id');
+    const enterButton = document.getElementById('enterButton');
+    // Enable the button if a valid option is selected
+    enterButton.disabled = selectElement.value === "";
+  }
+</script>
 {% endblock %}

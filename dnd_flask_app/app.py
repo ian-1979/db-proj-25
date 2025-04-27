@@ -24,7 +24,11 @@ mysql = MySQL(app)
 # Home route
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # if session.get('campain_role') == 'dm':
+    #     return render_template('index.html', role='dm')
+    # elif session.get('campaign_role') == 'player':
+    #     return render_template('index.html', role='player')
+    return render_template('index.html', role='noCampaign')
 
 # View all notecards
 @app.route('/notecards')
@@ -123,7 +127,7 @@ def login():
         password = request.form['password']
 
         cursor = mysql.connection.cursor()
-        cursor.execute("SELECT id, username, password, profile_image_path FROM user WHERE username = %s", (username,))
+        cursor.execute("SELECT id, use rname, password, profile_image_path FROM user WHERE username = %s", (username,))
         user = cursor.fetchone()
         cursor.close()
 
@@ -201,7 +205,7 @@ def selectcampaign():
         if access:
             session['campaign_id'] = selected_campaign
             session['campaign_role'] = access[0]
-            return redirect('/notecards')
+            return redirect(url_for('index'))
         else:
             return "Access denied", 403
 
