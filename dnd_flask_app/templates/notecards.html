@@ -7,19 +7,47 @@
   {% if data %}
   <div class="row row-cols-1 row-cols-md-2 g-4">
     {% for card in data %}
+    {% set card_extra = extras.get(card[0]) %}
     <div class="col">
       <div class="card h-100">
+
         {% if card[4] %}
-        <img src="{{ card[4] }}" class="card-img-top" alt="Notecard Image">
+        <a href="/viewnotecard/{{ card[0] }}">
+          <img src="{{ card[4] }}" class="card-img-top" alt="Notecard Image">
+        </a>
         {% endif %}
-        <div class="card-body">
+
+        <div class="card-body position-relative">
           <h5 class="card-title">{{ card[1] }} ({{ card[2] }})</h5>
           <p class="card-text">{{ card[3] }}</p>
+
+          {% if card_extra %}
+          <ul class="list-group list-group-flush mt-2">
+            {% for label, value in card_extra.items() %}
+            {% if value %}
+            <li class="list-group-item">
+              <strong>{{ label }}:</strong> {{ value }}
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+          {% endif %}
+
+          <a href="/viewnotecard/{{ card[0] }}" class="stretched-link"></a> <!-- Make card body clickable -->
         </div>
-      </div>
-    </div>
+
+        {% if session.get('campaign_role') == 'dm' %}
+        <div class="card-footer text-end">
+          <a href="/editnotecard/{{ card[0] }}" class="btn btn-sm btn-primary">Edit</a>
+          <a href="/deletenotecard/{{ card[0] }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this notecard?');">Delete</a>
+        </div>
+        {% endif %}
+
+      </div> <!-- card -->
+    </div> <!-- col -->
     {% endfor %}
-  </div>
+  </div> <!-- row -->
+
   {% else %}
   <p>No notecards found for this campaign.</p>
   {% endif %}
