@@ -9,7 +9,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'static/uploads')
+
 app.secret_key = 'your_secret_key_here'  # Make this a random string in production
 
 # MySQL configuration
@@ -242,8 +243,6 @@ def new_notecard():
         return render_template('newnotecard.html')
 
     if request.method == 'POST':
-        if request.method == 'POST':
-            print("POST request received!")
         name = request.form['name']
         note_type = request.form['type']
         text = request.form['text']
@@ -257,67 +256,83 @@ def new_notecard():
             filename = secure_filename(image.filename)
             if not os.path.exists(app.config['UPLOAD_FOLDER']):
                 os.makedirs(app.config['UPLOAD_FOLDER'])
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
             note_image_path = f"/static/uploads/{filename}"
 
-        # Insert into notecard table first
         cursor = mysql.connection.cursor()
-        cursor.execute("""
-            INSERT INTO notecard (name, type, text, campaign_id, public, note_image_path)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (name, note_type, text, campaign_id, public, note_image_path))
-        
-        note_id = cursor.lastrowid
 
-        # Insert into additional tables depending on type
-        if note_type.lower() in ['character', 'monster', 'npc']:
-            race = request.form.get('race')
-            level = request.form.get('level') or request.form.get('cr')  # npc/monster use CR
-            char_class = request.form.get('class')
-            strength = request.form.get('strength')
-            dexterity = request.form.get('dexterity')
-            constitution = request.form.get('constitution')
-            intelligence = request.form.get('intelligence')
-            wisdom = request.form.get('wisdom')
-            charisma = request.form.get('charisma')
+        try:
+            # Insert into notecard
+            cursor.execute("""
+                INSERT INTO notecard (name, type, text, campaign_id, public, note_image_path)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (name, note_type, text, campaign_id, public, note_image_path))
 
-            # Only insert if race and level (or cr) exist
-            if race and level:
-                cursor.execute("""
-                    INSERT INTO entity (entity_id, race, level, class, strength, dexterity, constitution, intelligence, wisdom, charisma)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (note_id, race, level, char_class, strength, dexterity, constitution, intelligence, wisdom, charisma))
+            mysql.connection.commit()  # 🔥 COMMIT NOW IMMEDIATELY
 
-        elif note_type.lower() == 'spell':
-            spell_level = request.form.get('spell_level')
-            school = request.form.get('school')
-            spell_description = request.form.get('spell_description')
-            damage_type = request.form.get('damage_type')
-            damage = request.form.get('damage')
-            save = request.form.get('save')
+            note_id = cursor.lastrowid
+            if not note_id:
+                raise Exception("Failed to get inserted notecard ID!")
 
-            # Only insert if spell_level and school exist
-            if spell_level and school:
-                cursor.execute("""
-                    INSERT INTO spell (spell_id, level, school, description, damage_type, damage, save)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (note_id, spell_level, school, spell_description, damage_type, damage, save))
+            # Insert into related table if needed
+            if note_type.lower() in ['character', 'monster', 'npc']:
+                race = request.form.get('race')
+                level = request.form.get('level') or request.form.get('cr')
+                char_class = request.form.get('class')
+                strength = request.form.get('strength')
+                dexterity = request.form.get('dexterity')
+                constitution = request.form.get('constitution')
+                intelligence = request.form.get('intelligence')
+                wisdom = request.form.get('wisdom')
+                charisma = request.form.get('charisma')
 
-        elif note_type.lower() == 'location':
-            location_type = request.form.get('location_type')
+                if race and level:
+                    cursor.execute("""
+                        INSERT INTO entity (id, race, level, class, strength, dexterity, constitution, intelligence, wisdom, charisma)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (note_id, race, level, char_class, strength, dexterity, constitution, intelligence, wisdom, charisma))
 
-            # Only insert if location_type exists
-            if location_type:
-                cursor.execute("""
-                    INSERT INTO location (location_id, location_type)
-                    VALUES (%s, %s)
-                """, (note_id, location_type))
+            elif note_type.lower() == 'spell':
+                spell_level = request.form.get('spell_level')
+                school = request.form.get('school')
+                spell_description = request.form.get('spell_description')
+                damage_type = request.form.get('damage_type')
+                damage = request.form.get('damage')
+                save = request.form.get('save')
 
-        # Finalize
-        mysql.connection.commit()
+                if spell_level and school:
+                    cursor.execute("""
+                        INSERT INTO spell (id, level, school, description, damage_type, damage, save)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """, (note_id, spell_level, school, spell_description, damage_type, damage, save))
+
+            elif note_type.lower() == 'location':
+                location_type = request.form.get('location_type')
+
+                if location_type:
+                    cursor.execute("""
+                        INSERT INTO location (id, location_type)
+                        VALUES (%s, %s)
+                    """, (note_id, location_type))
+
+            mysql.connection.commit()  # 🔥 Final commit after all inserts
+
+        except Exception as e:
+            print("Error during notecard creation:", e)
+            mysql.connection.rollback()
+            # Optional: if image was saved but DB insert failed, delete the file
+            if note_image_path:
+                try:
+                    os.remove(image_path)
+                except Exception as remove_error:
+                    print("Error cleaning up image file:", remove_error)
+            cursor.close()
+            return "Database error creating notecard.", 500
+
         cursor.close()
-
         return redirect('/notecards')
+
 
 
 
