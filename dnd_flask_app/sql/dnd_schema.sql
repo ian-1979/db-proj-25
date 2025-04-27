@@ -1,12 +1,9 @@
--- most recent schema that alex gave us
-
-
 -- phpMyAdmin SQL Dump
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 23, 2025 at 10:42 PM
+-- Generation Time: Apr 27, 2025 at 06:01 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -21,8 +18,10 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `d&database`
+-- Database: `dbdatabase1`
 --
+CREATE DATABASE IF NOT EXISTS `dbdatabase1` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `dbdatabase1`;
 
 -- --------------------------------------------------------
 
@@ -30,12 +29,17 @@ SET time_zone = "+00:00";
 -- Table structure for table `campaign`
 --
 
+DROP TABLE IF EXISTS `campaign`;
 CREATE TABLE `campaign` (
   `id` int(11) NOT NULL,
   `name` tinytext NOT NULL,
   `description` text DEFAULT NULL,
-  `campaign_image_path` tinyint(4) DEFAULT NULL
+  `campaign_image_path` tinytext DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `campaign`:
+--
 
 -- --------------------------------------------------------
 
@@ -43,12 +47,13 @@ CREATE TABLE `campaign` (
 -- Table structure for table `entity`
 --
 
+DROP TABLE IF EXISTS `entity`;
 CREATE TABLE `entity` (
   `id` int(11) NOT NULL,
   `note_id` int(11) NOT NULL,
   `entity_type` enum('character','monster','npc','location','spell','feature') NOT NULL,
   `level` int(11) DEFAULT NULL,
-  `class` int(11) DEFAULT NULL,
+  `class` tinytext DEFAULT NULL,
   `race` tinytext DEFAULT NULL,
   `strength` int(11) DEFAULT NULL,
   `dexterity` int(11) DEFAULT NULL,
@@ -58,16 +63,31 @@ CREATE TABLE `entity` (
   `charisma` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- RELATIONSHIPS FOR TABLE `entity`:
+--   `note_id`
+--       `notecard` -> `id`
+--
+
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `entity_feature`
 --
 
+DROP TABLE IF EXISTS `entity_feature`;
 CREATE TABLE `entity_feature` (
   `entity_id` int(11) NOT NULL,
   `feature_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `entity_feature`:
+--   `entity_id`
+--       `entity` -> `id`
+--   `feature_id`
+--       `feature` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -75,10 +95,19 @@ CREATE TABLE `entity_feature` (
 -- Table structure for table `entity_spell`
 --
 
+DROP TABLE IF EXISTS `entity_spell`;
 CREATE TABLE `entity_spell` (
   `entity_id` int(11) NOT NULL,
   `spell_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `entity_spell`:
+--   `entity_id`
+--       `entity` -> `id`
+--   `spell_id`
+--       `spells` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -86,10 +115,19 @@ CREATE TABLE `entity_spell` (
 -- Table structure for table `entity_tag`
 --
 
+DROP TABLE IF EXISTS `entity_tag`;
 CREATE TABLE `entity_tag` (
   `entity_id` int(11) NOT NULL,
   `tag_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `entity_tag`:
+--   `entity_id`
+--       `entity` -> `id`
+--   `tag_id`
+--       `tag` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -97,11 +135,18 @@ CREATE TABLE `entity_tag` (
 -- Table structure for table `feature`
 --
 
+DROP TABLE IF EXISTS `feature`;
 CREATE TABLE `feature` (
   `id` int(11) NOT NULL,
   `note_id` int(11) NOT NULL,
   `modifier_text` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `feature`:
+--   `note_id`
+--       `notecard` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -109,6 +154,7 @@ CREATE TABLE `feature` (
 -- Table structure for table `location`
 --
 
+DROP TABLE IF EXISTS `location`;
 CREATE TABLE `location` (
   `id` int(11) NOT NULL,
   `note_id` int(11) NOT NULL,
@@ -116,12 +162,21 @@ CREATE TABLE `location` (
   `location_type` tinytext NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- RELATIONSHIPS FOR TABLE `location`:
+--   `note_id`
+--       `notecard` -> `id`
+--   `parent_location_id`
+--       `location` -> `id`
+--
+
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `notecard`
 --
 
+DROP TABLE IF EXISTS `notecard`;
 CREATE TABLE `notecard` (
   `id` int(11) NOT NULL,
   `name` tinytext NOT NULL,
@@ -129,8 +184,14 @@ CREATE TABLE `notecard` (
   `text` text DEFAULT NULL,
   `campaign_id` int(11) NOT NULL,
   `public` tinyint(1) NOT NULL,
-  `note_image_path` int(11) DEFAULT NULL
+  `note_image_path` tinytext DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `notecard`:
+--   `campaign_id`
+--       `campaign` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -138,16 +199,23 @@ CREATE TABLE `notecard` (
 -- Table structure for table `spells`
 --
 
+DROP TABLE IF EXISTS `spells`;
 CREATE TABLE `spells` (
   `id` int(11) NOT NULL,
   `note_id` int(11) NOT NULL,
   `level` int(11) NOT NULL,
   `school` tinytext NOT NULL,
   `spell_text` text DEFAULT NULL,
-  `damage_type` tinyint(4) NOT NULL,
+  `damage_type` tinytext NOT NULL,
   `damage` tinyint(4) NOT NULL,
   `save` tinyint(4) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `spells`:
+--   `note_id`
+--       `notecard` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -155,10 +223,15 @@ CREATE TABLE `spells` (
 -- Table structure for table `tag`
 --
 
+DROP TABLE IF EXISTS `tag`;
 CREATE TABLE `tag` (
   `id` int(11) NOT NULL,
   `name` tinytext NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `tag`:
+--
 
 -- --------------------------------------------------------
 
@@ -166,12 +239,17 @@ CREATE TABLE `tag` (
 -- Table structure for table `user`
 --
 
+DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `id` int(10) UNSIGNED NOT NULL,
   `username` tinyint(4) NOT NULL,
   `password` tinytext NOT NULL,
-  `profile_image_path` smallint(6) DEFAULT NULL
+  `profile_image_path` tinytext DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `user`:
+--
 
 -- --------------------------------------------------------
 
@@ -179,10 +257,20 @@ CREATE TABLE `user` (
 -- Table structure for table `user_campaign`
 --
 
+DROP TABLE IF EXISTS `user_campaign`;
 CREATE TABLE `user_campaign` (
   `user_id` int(10) NOT NULL,
-  `campaign_id` int(11) NOT NULL
+  `campaign_id` int(11) NOT NULL,
+  `role` enum('dm','player') DEFAULT 'player'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `user_campaign`:
+--   `campaign_id`
+--       `campaign` -> `id`
+--   `user_id`
+--       `user` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -190,10 +278,20 @@ CREATE TABLE `user_campaign` (
 -- Table structure for table `user_note`
 --
 
+DROP TABLE IF EXISTS `user_note`;
 CREATE TABLE `user_note` (
-  `user_id` int(11) NOT NULL,
-  `note_id` int(11) NOT NULL
+  `user_id` int(10) NOT NULL,
+  `note_id` int(11) NOT NULL,
+  `note_text` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `user_note`:
+--   `note_id`
+--       `notecard` -> `id`
+--   `user_id`
+--       `user` -> `id`
+--
 
 --
 -- Indexes for dumped tables
@@ -268,8 +366,9 @@ ALTER TABLE `tag`
 -- Indexes for table `user`
 --
 ALTER TABLE `user`
+  MODIFY `username` varchar(20) NOT NULL,
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `Username` (`username`);
+  ADD UNIQUE KEY `username` (`username`);
 
 --
 -- Indexes for table `user_campaign`
@@ -281,7 +380,7 @@ ALTER TABLE `user_campaign`
 -- Indexes for table `user_note`
 --
 ALTER TABLE `user_note`
-  ADD PRIMARY KEY (`note_id`);
+  ADD PRIMARY KEY (`user_id`,`note_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
