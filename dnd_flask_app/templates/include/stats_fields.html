@@ -1,25 +1,24 @@
 <div class="mb-3">
-    <label class="form-label">Strength</label>
-    <input type="number" class="form-control" name="strength">
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Dexterity</label>
-    <input type="number" class="form-control" name="dexterity">
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Constitution</label>
-    <input type="number" class="form-control" name="constitution">
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Intelligence</label>
-    <input type="number" class="form-control" name="intelligence">
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Wisdom</label>
-    <input type="number" class="form-control" name="wisdom">
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Charisma</label>
-    <input type="number" class="form-control" name="charisma">
-  </div>
-  
+  <label class="form-label">Strength</label>
+  <input type="number" class="form-control" name="strength" value="{{ extra.strength if extra and extra.strength is defined else '10' }}">
+</div>
+<div class="mb-3">
+  <label class="form-label">Dexterity</label>
+  <input type="number" class="form-control" name="dexterity" value="{{ extra.dexterity if extra and extra.dexterity is defined else '10' }}">
+</div>
+<div class="mb-3">
+  <label class="form-label">Constitution</label>
+  <input type="number" class="form-control" name="constitution" value="{{ extra.constitution if extra and extra.constitution is defined else '10' }}">
+</div>
+<div class="mb-3">
+  <label class="form-label">Intelligence</label>
+  <input type="number" class="form-control" name="intelligence" value="{{ extra.intelligence if extra and extra.intelligence is defined else '10' }}">
+</div>
+<div class="mb-3">
+  <label class="form-label">Wisdom</label>
+  <input type="number" class="form-control" name="wisdom" value="{{ extra.wisdom if extra and extra.wisdom is defined else '10' }}">
+</div>
+<div class="mb-3">
+  <label class="form-label">Charisma</label>
+  <input type="number" class="form-control" name="charisma" value="{{ extra.charisma if extra and extra.charisma is defined else '10' }}">
+</div>
