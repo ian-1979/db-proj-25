@@ -485,7 +485,7 @@ def login():
         password = request.form['password']
 
         cursor = mysql.connection.cursor()
-        cursor.execute("SELECT id, use rname, password, profile_image_path FROM user WHERE username = %s", (username,))
+        cursor.execute("SELECT id, username, password, profile_image_path FROM user WHERE username = %s", (username,))
         user = cursor.fetchone()
         cursor.close()
 
