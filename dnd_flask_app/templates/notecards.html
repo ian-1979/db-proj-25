@@ -1,33 +1,29 @@
-{% extends '/include/layout.html' %}
+{% extends 'include/layout.html' %}
 {% block content %}
 
-<div class="container">
-  <h2 class="mb-4">All Notecards</h2>
-  <div class="row row-cols-1 row-cols-md-3 g-4">
-    {% for note in data %}
+<div class="container mt-5">
+  <h2 class="mb-4">Notecards</h2>
+
+  {% if data %}
+  <div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for card in data %}
     <div class="col">
-      <div class="card h-100 shadow-sm">
-        {% if note.note_image_path %}
-        <img src="{{ url_for('static', filename='images/' ~ note.note_image_path) }}" class="card-img-top" alt="{{ note.name }}">
-        {% else %}
-        <svg class="bd-placeholder-img card-img-top" width="100%" height="180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder" preserveAspectRatio="xMidYMid slice" focusable="false">
-          <rect width="100%" height="100%" fill="#6c757d"></rect>
-          <text x="50%" y="50%" fill="#fff" dy=".3em" text-anchor="middle">{{ note.type|capitalize }}</text>
-        </svg>
+      <div class="card h-100">
+        {% if card[4] %}
+        <img src="{{ card[4] }}" class="card-img-top" alt="Notecard Image">
         {% endif %}
         <div class="card-body">
-          <h5 class="card-title">{{ note.name }}</h5>
-          <p class="card-text"><strong>Type:</strong> {{ note.type|capitalize }}</p>
-          {% if note.text %}
-          <p class="card-text">{{ note.text|truncate(100, True, '...') }}</p>
-          {% else %}
-          <p class="card-text text-muted">No description available.</p>
-          {% endif %}
+          <h5 class="card-title">{{ card[1] }} ({{ card[2] }})</h5>
+          <p class="card-text">{{ card[3] }}</p>
         </div>
       </div>
     </div>
     {% endfor %}
   </div>
+  {% else %}
+  <p>No notecards found for this campaign.</p>
+  {% endif %}
+
 </div>
 
 {% endblock %}
