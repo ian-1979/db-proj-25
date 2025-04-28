@@ -1,55 +1,72 @@
 {% extends '/include/layout.html' %}
 {% block content %}
 
-<div class="container">
-  <h1>Welcome to the D&D Campaign Manager</h1>
+<div class="container text-center my-5">
+  <h1 class="display-4">Welcome to the D&D Campaign Manager</h1>
   <p class="lead">Track your characters, spells, monsters, and more — all in one place.</p>
+  <hr class="my-4">
+</div>
+
+{% if 'campaign_id' in session %}
+<div class="container marketing">
+  <div class="row text-center align-items-center justify-content-center">
+    <!-- Feature: View Notecards -->
+    <div class="col-lg-4 mb-4">
+      <a href="/notecards">
+        <img src="{{ url_for('static', filename='images/viewNotes.png') }}" class="rounded mb-3" width="140" height="140" alt="Notecards">
+      </a>
+      <h2>View Notecards</h2>
+      <p>Explore all saved characters, monsters, and locations for your campaign.</p>
+      <a class="btn btn-primary" href="/notecards">Browse Notecards »</a>
+    </div>
+
+    <!-- Feature: Search -->
+    <div class="col-lg-4 mb-4">
+      <a href="/notecardsearch">
+        <img src="{{ url_for('static', filename='images/searchNotes.png') }}" class="rounded mb-3" width="140" height="140" alt="Search">
+      </a>
+      <h2>Search</h2>
+      <p>Look up notecards by name or type to quickly find what you need mid-session.</p>
+      <a class="btn btn-primary" href="/notecardsearch">Search Notecards »</a>
+    </div>
+
+    {% if session.get('campaign_role') == 'dm' %}
+    <!-- Feature: Add New -->
+    <div class="col-lg-4 mb-4">
+      <a href="/newnotecard">
+        <img src="{{ url_for('static', filename='images/addNote.png') }}" class="rounded mb-3" width="140" height="140" alt="Add New">
+      </a>
+      <h2>Add New</h2>
+      <p>Create new notecards for characters, monsters, or places in your world.</p>
+      <a class="btn btn-primary" href="/newnotecard">Add Notecard »</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% else %}
+<div class="container text-center my-5">
+  <h2>Get Started</h2>
+  <p class="lead">To get started, you'll need to create or select a campaign.</p>
+  <a class="btn btn-success" href="/campaigns">Go to Campaigns Menu »</a>
+</div>
+{% endif %}
+
+
+<div class="container my-5">
+  <hr class="featurette-divider">
+  <div class="row featurette align-items-center">
+    <div class="col-md-7">
+      <h2 class="featurette-heading">Organize your world <span class="text-muted">— one note at a time.</span></h2>
+      <p class="lead">Keep track of everything from epic locations to powerful spells in your campaign setting using an
+        intuitive database-powered tool.</p>
+    </div>
+    <div class="col-md-5">
+      <img src="{{ url_for('static', filename='images/kgofhmkt40211.png') }}" class="featurette-image img-fluid mx-auto" width="500" height="500" alt="Campaign Art">
+
+    </div>
+  </div>
   <hr class="featurette-divider">
 </div>
 
-<div class="container marketing">
-
-  <!-- Three core features -->
-  <div class="row">
-    <div class="col-lg-4">
-      <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Notecards" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Notecards</title><rect width="100%" height="100%" fill="#6c757d"></rect></svg>
-      <h2 class="fw-normal">View Notecards</h2>
-      <p>Explore all saved characters, monsters, and locations for your campaign.</p>
-      <p><a class="btn btn-primary" href="/notecards">Browse Notecards »</a></p>
-    </div>
-
-    <div class="col-lg-4">
-      <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Search" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Search</title><rect width="100%" height="100%" fill="#6c757d"></rect></svg>
-      <h2 class="fw-normal">Search</h2>
-      <p>Look up notecards by name or type to quickly find what you need mid-session.</p>
-      <p><a class="btn btn-primary" href="/notecardsearch">Search Notecards »</a></p>
-    </div>
-
-    <div class="col-lg-4">
-      <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Create" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Create</title><rect width="100%" height="100%" fill="#6c757d"></rect></svg>
-      <h2 class="fw-normal">Add New</h2>
-      <p>Create new notecards for characters, monsters, or places in your world.</p>
-      <p><a class="btn btn-primary" href="/newnotecard">Add Notecard »</a></p>
-    </div>
-  </div>
-
-  <!-- Featurette section -->
-  <hr class="featurette-divider">
-
-  <div class="row featurette">
-    <div class="col-md-7">
-      <h2 class="featurette-heading fw-normal lh-1">Organize your world <span class="text-body-secondary">— one note at a time.</span></h2>
-      <p class="lead">Keep track of everything from epic locations to powerful spells in your campaign setting using an intuitive database-powered tool.</p>
-    </div>
-    <div class="col-md-5">
-      <svg class="bd-placeholder-img featurette-image img-fluid mx-auto" width="500" height="500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Campaign Art" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Campaign</title><rect width="100%" height="100%" fill="#e9ecef"></rect>
-        <text x="50%" y="50%" fill="#6c757d" dy=".3em" text-anchor="middle">D&D World</text>
-        </svg>
-    </div>
-    </div>
-        
-        <hr class="featurette-divider">
-        
-    </div> <!-- End .container marketing -->
-        
 {% endblock %}

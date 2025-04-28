@@ -94,15 +94,76 @@ def show_notecards():
 def notecard_search():
     if request.method == 'GET':
         return render_template('notecardsearch.html')
+
     if request.method == 'POST':
         name = request.form.get('name', '')
         note_type = request.form.get('type', '')
+        tag = request.form.get('tag', '')
+
         cursor = mysql.connection.cursor()
-        query = "SELECT id, name, type, text FROM notecard WHERE name LIKE %s OR type = %s"
-        cursor.execute(query, [f"%{name}%", note_type])
-        data = cursor.fetchall()
+
+        base_query = """
+            SELECT DISTINCT n.id, n.name, n.type, n.text, n.note_image_path
+            FROM notecard n
+            LEFT JOIN notecard_tag nt ON n.id = nt.note_id
+            LEFT JOIN tag t ON nt.tag_id = t.id
+            WHERE n.campaign_id = %s
+        """
+        conditions = []
+        params = [session['campaign_id']]
+
+        if name:
+            conditions.append("n.name LIKE %s")
+            params.append(f"%{name}%")
+        if note_type:
+            conditions.append("n.type = %s")
+            params.append(note_type)
+        if tag:
+            conditions.append("t.name LIKE %s")
+            params.append(f"%{tag}%")
+
+        if conditions:
+            base_query += " AND " + " AND ".join(conditions)
+
+        cursor.execute(base_query, params)
+        cards = cursor.fetchall()
+
+        extras = {}
+        for card in cards:
+            card_id, name, type_, text, image = card
+            extra = {}
+
+            if type_.lower() in ['character', 'monster', 'npc']:
+                cursor.execute("SELECT race, level, class FROM entity WHERE note_id = %s", (card_id,))
+                entity = cursor.fetchone()
+                if entity:
+                    extra = {
+                        'Race': entity[0],
+                        'Level': entity[1],
+                        'Class': entity[2]
+                    }
+            elif type_.lower() == 'spell':
+                cursor.execute("SELECT level, school, spell_text FROM spells WHERE note_id = %s", (card_id,))
+                spell = cursor.fetchone()
+                if spell:
+                    extra = {
+                        'Spell Level': spell[0],
+                        'School': spell[1],
+                        'Spell Text': spell[2]
+                    }
+            elif type_.lower() == 'location':
+                cursor.execute("SELECT location_type FROM location WHERE note_id = %s", (card_id,))
+                location = cursor.fetchone()
+                if location:
+                    extra = {'Location Type': location[0]}
+
+            if extra:
+                extras[card_id] = extra
+
         cursor.close()
-        return render_template('notecards.html', data=data)
+        return render_template('notecards.html', data=cards, extras=extras)
+
+
 
 
 #edit notecard route
