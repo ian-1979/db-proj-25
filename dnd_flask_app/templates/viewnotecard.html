@@ -25,6 +25,16 @@
   {% endif %}
 
   <h4 class="mt-5">Tags</h4>
+  {% if linked_spells %}
+    <h4 class="mt-5">Known Spells</h4>
+    <ul class="list-group list-group-flush mb-4">
+    {% for spell in linked_spells %}
+    <li class="list-group-item">
+        <a href="/viewnotecard/{{ spell[0] }}">{{ spell[1] }}</a>
+    </li>
+    {% endfor %}
+    </ul>
+  {% endif %}
   {% if tags %}
     <div class="mb-3">
       {% for tag in tags %}
