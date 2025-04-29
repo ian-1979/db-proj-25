@@ -314,23 +314,20 @@ ALTER TABLE `entity`
 --
 -- Indexes for table `entity_feature`
 --
--- ALTER TABLE `entity_feature`
---   ADD FOREIGN KEY (`entity_id`) REFERENCES `entity`(`id`),
---   ADD FOREIGN KEY (`feature_id`) REFERENCES `feature`(`id`);
+ALTER TABLE `entity_feature`
+  ADD PRIMARY KEY (`entity_id`,`feature_id`);
 
--- --
--- -- Indexes for table `entity_spell`
--- --
--- ALTER TABLE `entity_spell`
---   ADD FOREIGN KEY (`entity_id`) REFERENCES `entity`(`id`),
---   ADD FOREIGN KEY (`spell_id`) REFERENCES `spells`(`id`);
+--
+-- Indexes for table `entity_spell`
+--
+ALTER TABLE `entity_spell`
+  ADD PRIMARY KEY (`entity_id`,`spell_id`);
 
--- --
--- -- Indexes for table `entity_tag`
--- --
--- ALTER TABLE `entity_tag`
---   ADD FOREIGN KEY (`entity_id`) REFERENCES `entity`(`id`),
---   ADD FOREIGN KEY (`tag_id`) REFERENCES `tag`(`id`);
+--
+-- Indexes for table `entity_tag`
+--
+ALTER TABLE `entity_tag`
+  ADD PRIMARY KEY (`entity_id`,`tag_id`);
 
 --
 -- Indexes for table `feature`
@@ -376,14 +373,14 @@ ALTER TABLE `user`
 --
 -- Indexes for table `user_campaign`
 --
--- ALTER TABLE `user_campaign`
---   ADD FOREIGN KEY (`user_id`,`campaign_id`);
+ALTER TABLE `user_campaign`
+  ADD PRIMARY KEY (`user_id`,`campaign_id`);
 
 --
 -- Indexes for table `user_note`
--- --
--- ALTER TABLE `user_note`
---   ADD fore KEY (`user_id`,`note_id`);
+--
+ALTER TABLE `user_note`
+  ADD PRIMARY KEY (`user_id`,`note_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
