@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 27, 2025 at 06:01 PM
+-- Generation Time: Apr 27, 2025 at 10:34 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -51,7 +51,7 @@ DROP TABLE IF EXISTS `entity`;
 CREATE TABLE `entity` (
   `id` int(11) NOT NULL,
   `note_id` int(11) NOT NULL,
-  `entity_type` enum('character','monster','npc','location','spell','feature') NOT NULL,
+  `entity_type` enum('character','monster','npc') NOT NULL,
   `level` int(11) DEFAULT NULL,
   `class` tinytext DEFAULT NULL,
   `race` tinytext DEFAULT NULL,
@@ -112,26 +112,6 @@ CREATE TABLE `entity_spell` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `entity_tag`
---
-
-DROP TABLE IF EXISTS `entity_tag`;
-CREATE TABLE `entity_tag` (
-  `entity_id` int(11) NOT NULL,
-  `tag_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- RELATIONSHIPS FOR TABLE `entity_tag`:
---   `entity_id`
---       `entity` -> `id`
---   `tag_id`
---       `tag` -> `id`
---
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `feature`
 --
 
@@ -180,7 +160,7 @@ DROP TABLE IF EXISTS `notecard`;
 CREATE TABLE `notecard` (
   `id` int(11) NOT NULL,
   `name` tinytext NOT NULL,
-  `type` enum('character','monster','npc','location') NOT NULL,
+  `type` enum('character','monster','npc','location', 'spell') NOT NULL,
   `text` text DEFAULT NULL,
   `campaign_id` int(11) NOT NULL,
   `public` tinyint(1) NOT NULL,
@@ -191,6 +171,26 @@ CREATE TABLE `notecard` (
 -- RELATIONSHIPS FOR TABLE `notecard`:
 --   `campaign_id`
 --       `campaign` -> `id`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notecard_tag`
+--
+
+DROP TABLE IF EXISTS `notecard_tag`;
+CREATE TABLE `notecard_tag` (
+  `note_id` int(11) NOT NULL,
+  `tag_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- RELATIONSHIPS FOR TABLE `notecard_tag`:
+--   `note_id`
+--       `notecard` -> `id`
+--   `tag_id`
+--       `tag` -> `id`
 --
 
 -- --------------------------------------------------------
@@ -242,7 +242,7 @@ CREATE TABLE `tag` (
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `id` int(10) UNSIGNED NOT NULL,
-  `username` tinyint(4) NOT NULL,
+  `username` tinytext NOT NULL,
   `password` tinytext NOT NULL,
   `profile_image_path` tinytext DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -324,12 +324,6 @@ ALTER TABLE `entity_spell`
   ADD PRIMARY KEY (`entity_id`,`spell_id`);
 
 --
--- Indexes for table `entity_tag`
---
-ALTER TABLE `entity_tag`
-  ADD PRIMARY KEY (`entity_id`,`tag_id`);
-
---
 -- Indexes for table `feature`
 --
 ALTER TABLE `feature`
@@ -350,6 +344,12 @@ ALTER TABLE `notecard`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `notecard_tag`
+--
+ALTER TABLE `notecard_tag`
+  ADD PRIMARY KEY (`note_id`,`tag_id`);
+
+--
 -- Indexes for table `spells`
 --
 ALTER TABLE `spells`
@@ -366,9 +366,8 @@ ALTER TABLE `tag`
 -- Indexes for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `username` varchar(20) NOT NULL,
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `username` (`username`);
+  ADD UNIQUE KEY `Username` (`username`) USING HASH;
 
 --
 -- Indexes for table `user_campaign`

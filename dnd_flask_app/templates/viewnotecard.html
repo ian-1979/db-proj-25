@@ -1,0 +1,83 @@
+{% extends 'include/layout.html' %}
+{% block content %}
+
+<div class="container mt-5">
+
+  <h2 class="mb-3">{{ card[1] }} <small class="text-muted">({{ card[2] }})</small></h2>
+
+  {% if card[4] %}
+  <img src="{{ card[4] }}" class="img-fluid mb-4 rounded" alt="Notecard Image" style="cursor:pointer;" onclick="window.location='/viewnotecard/{{ card[0] }}';">
+  {% endif %}
+
+  <p class="fs-5">{{ card[3] }}</p>
+
+  {% if extra %}
+  <h4 class="mt-5">Details</h4>
+  <ul class="list-group list-group-flush">
+    {% for label, value in extra.items() %}
+    {% if value %}
+    <li class="list-group-item">
+      <strong>{{ label }}:</strong> {{ value }}
+    </li>
+    {% endif %}
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <h4 class="mt-5">Tags</h4>
+  {% if linked_spells %}
+    <h4 class="mt-5">Known Spells</h4>
+    <ul class="list-group list-group-flush mb-4">
+    {% for spell in linked_spells %}
+    <li class="list-group-item">
+        <a href="/viewnotecard/{{ spell[0] }}">{{ spell[1] }}</a>
+    </li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  {% if tags %}
+    <div class="mb-3">
+      {% for tag in tags %}
+      <a href="/tagsearch/{{ tag }}" class="btn btn-outline-primary btn-sm me-2 mb-2">{{ tag }}</a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">No tags yet for this notecard.</p>
+  {% endif %}
+
+  {% if 'user_id' in session and session.get('campaign_role') == 'dm' %}
+  <form method="POST" action="/addtag/{{ card[0] }}" class="mt-3">
+    <div class="input-group">
+      <input type="text" name="tag_name" class="form-control" placeholder="New tag..." required>
+      <button class="btn btn-success" type="submit">Add Tag</button>
+    </div>
+  </form>
+  {% endif %}
+
+  <h4 class="mt-5">Player Notes</h4>
+  {% if notes %}
+    {% for username, note_text in notes %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">{{ username }}</h6>
+        <p class="card-text">{{ note_text }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-muted">No player notes yet.</p>
+  {% endif %}
+
+  {% if 'user_id' in session %}
+  <form method="POST" action="/addnotecardnote/{{ card[0] }}" class="mt-4">
+    <div class="mb-3">
+      <label for="note_text" class="form-label">Add a Note:</label>
+      <textarea class="form-control" name="note_text" id="note_text" rows="3" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-success">Submit Note</button>
+  </form>
+  {% endif %}
+
+</div>
+
+{% endblock %}

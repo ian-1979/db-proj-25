@@ -9,7 +9,7 @@ def run_sql_files(app, directory):
         conn = mysql.connection
         cursor = conn.cursor()
 
-        queries = ["dnd_schema.sql", "sample_data.sql"] #add quries here
+        queries = ["dbdatabase1.sql", "sample_data.sql"] #add quries here
 
         try:
             # Iterate through all SQL files in the specified directory

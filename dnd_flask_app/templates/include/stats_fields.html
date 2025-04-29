@@ -1,25 +1,65 @@
+ {% if extra %}
 <div class="mb-3">
-    <label class="form-label">Strength</label>
-    <input type="number" class="form-control" name="strength">
+  <h5 class="mt-4">Stats</h5>
+  <div class="row g-2">
+    <div class="col">
+      <label class="form-label">Strength</label>
+      <input type="number" class="form-control" name="strength" min="1" max="20" placeholder="STR" value="{{ extra.strength or '' }}">
+    </div>
+    <div class="col">
+      <label class="form-label">Dexterity</label>
+      <input type="number" class="form-control" name="dexterity" min="1" max="20" placeholder="DEX" value="{{ extra.dexterity or '' }}">
+    </div>
+    <div class="col">
+      <label class="form-label">Constitution</label>
+      <input type="number" class="form-control" name="constitution" min="1" max="20" placeholder="CON" value="{{ extra.constitution or '' }}">
+    </div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">Dexterity</label>
-    <input type="number" class="form-control" name="dexterity">
+  <div class="row g-2 mt-2">
+    <div class="col">
+      <label class="form-label">Intelligence</label>
+      <input type="number" class="form-control" name="intelligence" min="1" max="20" placeholder="INT" value="{{ extra.intelligence or '' }}">
+    </div>
+    <div class="col">
+      <label class="form-label">Wisdom</label>
+      <input type="number" class="form-control" name="wisdom" min="1" max="20" placeholder="WIS" value="{{ extra.wisdom or '' }}">
+    </div>
+    <div class="col">
+      <label class="form-label">Charisma</label>
+      <input type="number" class="form-control" name="charisma" min="1" max="20" placeholder="CHA" value="{{ extra.charisma or '' }}">
+    </div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">Constitution</label>
-    <input type="number" class="form-control" name="constitution">
+</div>
+{% else %}
+<div class="mb-3">
+  <h5 class="mt-4">Stats</h5>
+  <div class="row g-2">
+    <div class="col">
+      <label class="form-label">Strength</label>
+      <input type="number" class="form-control" name="strength" min="1" max="20" placeholder="STR">
+    </div>
+    <div class="col">
+      <label class="form-label">Dexterity</label>
+      <input type="number" class="form-control" name="dexterity" min="1" max="20" placeholder="DEX">
+    </div>
+    <div class="col">
+      <label class="form-label">Constitution</label>
+      <input type="number" class="form-control" name="constitution" min="1" max="20" placeholder="CON">
+    </div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">Intelligence</label>
-    <input type="number" class="form-control" name="intelligence">
+  <div class="row g-2 mt-2">
+    <div class="col">
+      <label class="form-label">Intelligence</label>
+      <input type="number" class="form-control" name="intelligence" min="1" max="20" placeholder="INT">
+    </div>
+    <div class="col">
+      <label class="form-label">Wisdom</label>
+      <input type="number" class="form-control" name="wisdom" min="1" max="20" placeholder="WIS">
+    </div>
+    <div class="col">
+      <label class="form-label">Charisma</label>
+      <input type="number" class="form-control" name="charisma" min="1" max="20" placeholder="CHA">
+    </div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">Wisdom</label>
-    <input type="number" class="form-control" name="wisdom">
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Charisma</label>
-    <input type="number" class="form-control" name="charisma">
-  </div>
-  
+</div>
+{% endif %}

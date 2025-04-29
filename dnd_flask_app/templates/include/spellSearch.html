@@ -1,0 +1,99 @@
+<div class="mb-3">
+    <label for="spell_id" class="form-label">Select a Spell</label>
+    <div class="input-group">
+        <select name="spell_id" id="spell_id" class="form-select">
+            <option value="">-- Choose a spell --</option>
+            {% for spell in spells %}
+            <option value="{{ spell.id }}">{{ spell.name }}</option>
+            {% endfor %}
+        </select>
+        <button id="add-spell" class="btn btn-success" type="button">+</button>
+    </div>
+</div>
+
+<div class="mb-3">
+    <h5>Selected Spells</h5>
+    <div id="selected-spells" class="d-flex flex-wrap gap-2">
+        <!-- Dynamically added spells will appear here -->
+        {% if extra and extra.spells is not none %}
+        {% for spell in extra.spells %}
+        <div class="badge bg-primary text-wrap d-flex align-items-center justify-content-between"
+            data-spell-id="{{ spell.id }}">
+            {{ spell.name }}
+            <button class="btn-close btn-close-white ms-2" type="button" aria-label="Remove"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Hidden inputs container for spell IDs -->
+<div id="hidden-spell-inputs">
+    {% if extra and extra.spells is not none %}
+    {% for spell in extra.spells %}
+    <input type="hidden" name="spell_ids[]" value="{{ spell.id }}">
+    {% endfor %}
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const spellSelect = document.getElementById("spell_id");
+        const addSpellButton = document.getElementById("add-spell");
+        const selectedSpellsList = document.getElementById("selected-spells");
+        const hiddenSpellInputs = document.getElementById("hidden-spell-inputs");
+
+        // Add new spells when the "+" button is clicked
+        addSpellButton.addEventListener("click", function () {
+            const selectedOption = spellSelect.options[spellSelect.selectedIndex];
+            const spellName = selectedOption.textContent.trim();
+            const spellId = selectedOption.value;
+
+            if (spellId) {
+                // Check if the spell is already in the list
+                const existingSpells = Array.from(selectedSpellsList.children).map(
+                    (div) => div.dataset.spellId
+                );
+                if (!existingSpells.includes(spellId)) {
+                    // Add the spell to the list
+                    const spellDiv = document.createElement("div");
+                    spellDiv.textContent = spellName;
+                    spellDiv.dataset.spellId = spellId;
+                    spellDiv.className = "badge bg-primary text-wrap d-flex align-items-center justify-content-between";
+
+                    // Add a remove button
+                    const removeButton = document.createElement("button");
+                    removeButton.textContent = "×";
+                    removeButton.className = "btn-close btn-close-white ms-2";
+                    removeButton.addEventListener("click", function () {
+                        spellDiv.remove();
+                        // Remove the corresponding hidden input
+                        document.querySelector(`input[value="${spellId}"]`).remove();
+                    });
+
+                    spellDiv.appendChild(removeButton);
+                    selectedSpellsList.appendChild(spellDiv);
+
+                    // Add a hidden input for the spell ID
+                    const hiddenInput = document.createElement("input");
+                    hiddenInput.type = "hidden";
+                    hiddenInput.name = "spell_ids[]"; // Use an array name to send multiple IDs
+                    hiddenInput.value = spellId;
+                    hiddenSpellInputs.appendChild(hiddenInput);
+                }
+            }
+        });
+
+        // Add remove functionality to prepopulated spells
+        const removeButtons = selectedSpellsList.querySelectorAll(".btn-close");
+        removeButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                const spellDiv = button.parentElement;
+                const spellId = spellDiv.dataset.spellId;
+                spellDiv.remove();
+                // Remove the corresponding hidden input
+                document.querySelector(`input[value="${spellId}"]`).remove();
+            });
+        });
+    });
+</script>
