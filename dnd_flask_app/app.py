@@ -109,6 +109,7 @@ def notecard_search():
         return render_template('notecards.html', data=data)
 
 
+
 #edit notecard route
 @app.route('/editnotecard/<int:notecard_id>', methods=['GET', 'POST'])
 def edit_notecard(notecard_id):
@@ -142,6 +143,7 @@ def edit_notecard(notecard_id):
 
     # Now: Load Extra fields depending on Type
     extra = {}
+    spells = [] 
 
     if card['type'] in ['character', 'monster', 'npc']:
         cursor.execute("""
@@ -173,7 +175,6 @@ def edit_notecard(notecard_id):
             associated_spell_ids = [row[0] for row in cursor.fetchall()]
             print("Associated spell IDs:", associated_spell_ids)
 
-            spells = []
             cursor = mysql.connection.cursor()
             cursor.execute("""
                 SELECT s.id, n.name
@@ -226,8 +227,6 @@ def edit_notecard(notecard_id):
         text = request.form['text']
         public = int(request.form.get('public', 0))
 
-        spell_ids = request.form.getlist('spell_ids[]')
-
         # Handle image upload
         image = request.files.get('image')
         note_image_path = card['note_image_path']  # Default to existing
@@ -250,10 +249,11 @@ def edit_notecard(notecard_id):
                 WHERE id = %s AND campaign_id = %s
             """, (name, note_type, text, note_image_path, public, notecard_id, session['campaign_id']))
 
-            # Delete old type-specific records (simpler and safer)
-            cursor.execute("DELETE FROM entity WHERE note_id = %s", (notecard_id,))
-            cursor.execute("DELETE FROM spells WHERE note_id = %s", (notecard_id,))
-            cursor.execute("DELETE FROM location WHERE note_id = %s", (notecard_id,))
+            #this is objectively bad should alter records because thats what were doing. editing a notecard
+            # # Delete old type-specific records (simpler and safer)
+            # cursor.execute("DELETE FROM entity WHERE note_id = %s", (notecard_id,))
+            # cursor.execute("DELETE FROM spells WHERE note_id = %s", (notecard_id,))
+            # cursor.execute("DELETE FROM location WHERE note_id = %s", (notecard_id,))
 
             # Re-insert new type-specific data
             if note_type.lower() in ['character', 'monster', 'npc']:
@@ -269,13 +269,23 @@ def edit_notecard(notecard_id):
 
                 if race and level:
                     cursor.execute("""
-                        INSERT INTO entity (note_id, race, level, class, strength, dexterity, constitution, intelligence, wisdom, charisma)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (notecard_id, race, level, char_class, strength, dexterity, constitution, intelligence, wisdom, charisma))
+                        UPDATE entity
+                        SET race = %s, level = %s, class = %s, strength = %s, dexterity = %s, constitution = %s, intelligence = %s, wisdom = %s, charisma = %s
+                        WHERE note_id = %s
+                    """, (race, level, char_class, strength, dexterity, constitution, intelligence, wisdom, charisma, notecard_id))
                     # Get the ID of the last inserted entity
-                    entity_id = cursor.lastrowid
+                    cursor.execute("SELECT id FROM entity WHERE note_id = %s", (notecard_id,))
+                    entity_id = cursor.fetchone()[0]
 
-                    # Connect the entity to spells if any are selected
+                    print("Entity ID:", entity_id)
+                    # Remove existing spell associations for the entity
+                    cursor.execute("""
+                        DELETE FROM entity_spell
+                        WHERE entity_id = %s
+                    """, (entity_id,))
+
+                    spell_ids = request.form.getlist('spell_ids[]')
+                    print("Selected spell IDs:", spell_ids)
                     for spell_id in spell_ids:
                         connectSpell(entity_id, spell_id)
 
@@ -286,22 +296,22 @@ def edit_notecard(notecard_id):
                 damage_type = request.form.get('damage_type')
                 damage = request.form.get('damage')
                 save = request.form.get('save')
-
                 if spell_level and school:
                     cursor.execute("""
-                        INSERT INTO spells (note_id, level, school, spell_text, damage_type, damage, save)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    """, (notecard_id, spell_level, school, spell_description, damage_type, damage, save))
+                        UPDATE spells
+                        SET level = %s, school = %s, spell_text = %s, damage_type = %s, damage = %s, save = %s
+                        WHERE note_id = %s
+                    """, (spell_level, school, spell_description, damage_type, damage, save, notecard_id))
 
             elif note_type.lower() == 'location':
                 location_type = request.form.get('location_type')
 
                 if location_type:
                     cursor.execute("""
-                        INSERT INTO location (note_id, location_type)
-                        VALUES (%s, %s)
-                    """, (notecard_id, location_type))
-
+                        UPDATE location
+                        SET location_type = %s
+                        WHERE note_id = %s
+                    """, (location_type, notecard_id))
 
             mysql.connection.commit()
             cursor.close()
@@ -310,7 +320,7 @@ def edit_notecard(notecard_id):
             print("Error during notecard update:", e)
             mysql.connection.rollback()
             cursor.close()
-            return "Database error updating notecard.", 500
+            return "Database error updating notecard.", e
 
         return redirect('/notecards')
 
@@ -737,7 +747,7 @@ def new_notecard():
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (name, note_type, text, campaign_id, public, note_image_path))
 
-            mysql.connection.commit()  # 🔥 Commit to get valid lastrowid
+            mysql.connection.commit()  
 
             note_id = cursor.lastrowid
             if not note_id:
@@ -763,6 +773,7 @@ def new_notecard():
                 
                         # Get the list of selected spell IDs
                 spell_ids = request.form.getlist('spell_ids[]')
+                print("Selected spell IDs:", spell_ids)
                 entity_id = cursor.lastrowid  # Get the ID of the last inserted entity
                 # Connect the entity to spells if any are selected
                 for spell_id in spell_ids:

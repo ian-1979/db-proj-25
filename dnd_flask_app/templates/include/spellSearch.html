@@ -27,6 +27,15 @@
     </div>
 </div>
 
+<!-- Hidden inputs container for spell IDs -->
+<div id="hidden-spell-inputs">
+    {% if extra and extra.spells is not none %}
+    {% for spell in extra.spells %}
+    <input type="hidden" name="spell_ids[]" value="{{ spell.id }}">
+    {% endfor %}
+    {% endif %}
+</div>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const spellSelect = document.getElementById("spell_id");
