@@ -94,6 +94,35 @@
         {% include 'include/spellSearch.html' %}
       </div>
 
+      <!-- Spell Fields -->
+      <div id="spell-fields" class="extra-type" style="display: none;">
+        <h5 class="mt-4">Spell Details</h5>
+        <div class="mb-3">
+          <label class="form-label">Level</label>
+          <input type="number" min="0" max="9" class="form-control" name="spell_level">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">School</label>
+          <input type="text" class="form-control" name="school">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description Text</label>
+          <textarea class="form-control" name="spell_description"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Damage Type (optional)</label>
+          <input type="text" class="form-control" name="damage_type">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Damage (optional)</label>
+          <input type="text" class="form-control" name="damage">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Save (optional)</label>
+          <input type="text" class="form-control" name="save">
+        </div>
+      </div>
+
       <!-- Location Fields -->
       <div id="location-fields" class="extra-type" style="display: none;">
         <h5 class="mt-4">Location Details</h5>

@@ -5,6 +5,8 @@ INSERT INTO `user` (`id`, `username`, `password`, `profile_image_path`) VALUES
 (1, 'dungeonmaster', 'scrypt:32768:8:1$9AmdzufqStoWt4fy$9600dce27739c22e662d66bd4a44fa1f5ee0eb6c5cabaae0ec01832d7797982055e740ea735c8ee69c73f803686af3aa4c955f1cae83c623d7bb28ee533525ab', NULL), -- THE PASSWORD FOR dungeonmaster is: password123
 (2, 'playerone', 'scrypt:32768:8:1$e3i4HqCBWybkjYCB$1d109220c2ca183b583dbb04d741201a5699cac5a68906fb0f12b0007898cf45c551da92f029dbe287874221583afb91effeb61f42330044a5f9516010fdbf2b', NULL), -- THE PASSWORD FOR dungeonmaster is: mypassword
 (3, 'playertwo', 'scrypt:32768:8:1$yKkVfRQwND6Us8y4$9936db8406c0380fa8171fa4ad3682c5f8d9c6f0c355e461d0cf3314bed0a32567e59f22672708454dbaa9fb9e0883c9ff6cd373d71df7157246c7961f51a6a6', NULL); -- THE PASSWORD FOR dungeonmaster is: securepass
+(2, 'playerone', 'scrypt:32768:8:1$e3i4HqCBWybkjYCB$1d109220c2ca183b583dbb04d741201a5699cac5a68906fb0f12b0007898cf45c551da92f029dbe287874221583afb91effeb61f42330044a5f9516010fdbf2b', NULL), -- THE PASSWORD FOR playerone is: mypassword
+(3, 'playertwo', 'scrypt:32768:8:1$yKkVfRQwND6Us8y4$9936db8406c0380fa8171fa4ad3682c5f8d9c6f0c355e461d0cf3314bed0a32567e59f22672708454dbaa9fb9e0883c9ff6cd373d71df7157246c7961f51a6a6', NULL); -- THE PASSWORD FOR playertwo is: securepass
 
 -- Insert campaigns
 INSERT INTO `campaign` (`id`, `name`, `description`, `campaign_image_path`) VALUES

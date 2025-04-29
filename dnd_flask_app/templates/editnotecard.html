@@ -40,6 +40,8 @@
       </label>
     </div>
 
+
+
     <!-- Entity/Spell/Location Specific Fields -->
     {% if card.type in ['character', 'monster', 'npc'] %}
     <h5 class="mt-4">Entity Details</h5>
@@ -68,10 +70,14 @@
         <div class="mb-3">
           <label class="form-label">Level</label>
           <input type="number" class="form-control" name="level" value="{{ extra.level if extra.level is defined else '' }}">
+          <input type="number" class="form-control" name="level"
+            value="{{ extra.level if extra.level is defined else '' }}">
         </div>
         <div class="mb-3">
           <label class="form-label">Class (optional)</label>
           <input type="text" class="form-control" name="class" value="{{ extra.class if extra.class is defined else '' }}">
+          <input type="text" class="form-control" name="class"
+            value="{{ extra.class if extra.class is defined else '' }}">
         </div>
         {% include 'include/stats_fields.html' %}
         {% include 'include/spellSearch.html' %}
@@ -124,6 +130,8 @@
 </div>
 {% endif %}
 {% endif %}
+
+
 
 {% if card.type|lower == 'spell' %}
 <h5 class="mt-4">Spell Details</h5>
