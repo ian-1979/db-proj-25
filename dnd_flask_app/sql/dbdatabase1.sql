@@ -378,8 +378,8 @@ ALTER TABLE `user_campaign`
 --
 -- Indexes for table `user_note`
 --
-ALTER TABLE `user_note`
-  ADD PRIMARY KEY (`user_id`,`note_id`);
+-- ALTER TABLE `user_note`
+--   ADD PRIMARY KEY (`user_id`,`note_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables

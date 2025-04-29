@@ -481,60 +481,25 @@ def view_notecard(notecard_id):
     cursor.close()
 
     return render_template('viewnotecard.html', card=card, extra=extra, tags=tags, notes=notes, linked_spells=linked_spells)
-
-
-# @app.route('/addnotecardnote', methods=['GET'])
-# def add_notecard_note_get():
-#     print("add_notecard_note called with notecard_id:")
-
-#     spells = []
-#     cursor = mysql.connection.cursor()
-#     cursor.execute("""
-#         SELECT s.id, n.name
-#         FROM spells s
-#         JOIN notecard n ON s.note_id = n.id
-#     """)
-#     spells = cursor.fetchall()
-#     cursor.close()
-#     spells = [{'id': spell[0], 'name': spell[1]} for spell in spells]
-#     print("Spells fetched:", spells)
-#     # Format spells for dropdown
-#     return render_template('addnotecardnote.html', spells=spells, extra=None)
     
 
-# @app.route('/addnotecardnote/<int:notecard_id>', methods=['POST'])
-# def add_notecard_note(notecard_id):
-#     print("add_notecard_note called with notecard_id:", notecard_id)
+@app.route('/addnotecardnote/<int:notecard_id>', methods=['POST'])
+def add_notecard_note(notecard_id):
+    print("add_notecard_note called with notecard_id:", notecard_id)
 
-#     if 'user_id' not in session:
-#         return redirect('/login')
+    if 'user_id' not in session:
+        return redirect('/login')
 
-#     note_text = request.form['note_text']
-#     cursor = mysql.connection.cursor()
-#     cursor.execute("""
-#         INSERT INTO user_note (note_id, user_id, note_text)
-#         VALUES (%s, %s, %s)
-#     """, (notecard_id, session['user_id'], note_text))
-#     mysql.connection.commit()
-#     cursor.close()
+    note_text = request.form['note_text']
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        INSERT INTO user_note (note_id, user_id, note_text)
+        VALUES (%s, %s, %s)
+    """, (notecard_id, session['user_id'], note_text))
+    mysql.connection.commit()
+    cursor.close()
 
-#     spell_ids = request.form.getlist('spell_ids[]')
-#     cursor = mysql.connection.cursor()
-#     cursor.execute("""
-#         SELECT id
-#         FROM entity
-#         WHERE note_id = %s
-#     """, (notecard_id,))
-#     entity = cursor.fetchone()
-#     cursor.close()
-
-#     if entity:
-#         entity_id = entity[0]
-#     else:
-#         entity_id = None
-#     connectSpell(entity_id, spell_ids)
-
-#     return redirect(f'/viewnotecard/{notecard_id}')
+    return redirect(f'/viewnotecard/{notecard_id}')
 
 
 
