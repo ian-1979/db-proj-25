@@ -447,6 +447,19 @@ def view_notecard(notecard_id):
             'Location Type': location[0],
         })
 
+
+    linked_spells = []
+    cursor.execute("""
+        SELECT s.note_id, n.name
+        FROM entity_spell es
+        JOIN spells s ON es.spell_id = s.id
+        JOIN notecard n ON s.note_id = n.id
+        WHERE es.entity_id = (
+            SELECT id FROM entity WHERE note_id = %s
+        )
+    """, (notecard_id,))
+    linked_spells = cursor.fetchall()
+
     # Tags system (later attach real tags)
     cursor.execute("""
         SELECT t.name
@@ -467,7 +480,8 @@ def view_notecard(notecard_id):
 
     cursor.close()
 
-    return render_template('viewnotecard.html', card=card, extra=extra, tags=tags, notes=notes)
+    return render_template('viewnotecard.html', card=card, extra=extra, tags=tags, notes=notes, linked_spells=linked_spells)
+
 
 # @app.route('/addnotecardnote', methods=['GET'])
 # def add_notecard_note_get():
