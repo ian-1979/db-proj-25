@@ -51,7 +51,6 @@ DROP TABLE IF EXISTS `entity`;
 CREATE TABLE `entity` (
   `id` int(11) NOT NULL,
   `note_id` int(11) NOT NULL,
-  `entity_type` enum('character','monster','npc','location','spell','feature') NOT NULL,
   `entity_type` enum('character','monster','npc') NOT NULL,
   `level` int(11) DEFAULT NULL,
   `class` tinytext DEFAULT NULL,
@@ -161,7 +160,6 @@ DROP TABLE IF EXISTS `notecard`;
 CREATE TABLE `notecard` (
   `id` int(11) NOT NULL,
   `name` tinytext NOT NULL,
-  `type` enum('character','monster','npc','location') NOT NULL,
   `type` enum('character','monster','npc','location', 'spell') NOT NULL,
   `text` text DEFAULT NULL,
   `campaign_id` int(11) NOT NULL,
