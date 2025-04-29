@@ -1,0 +1,29 @@
+{% extends 'include/layout.html' %}
+{% block content %}
+
+<div class="container my-5">
+  <h2 class="mb-4">Connect Spell to Character</h2>
+  <form action="/connectSpell" method="POST">
+    <div class="mb-3">
+      <label for="entity_id" class="form-label">Select Character</label>
+      <select name="entity_id" id="entity_id" class="form-select" required>
+        <option value="">-- Choose a character --</option>
+        {% for entity in entities %}
+        <option value="{{ entity.id }}">{{ entity.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="spell_id" class="form-label">Select Spell</label>
+      <select name="spell_id" id="spell_id" class="form-select" required>
+        <option value="">-- Choose a spell --</option>
+        {% for spell in spells %}
+        <option value="{{ spell.id }}">{{ spell.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Connect Spell</button>
+  </form>
+</div>
+
+{% endblock %}
