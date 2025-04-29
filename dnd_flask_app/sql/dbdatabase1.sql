@@ -207,8 +207,8 @@ CREATE TABLE `spells` (
   `school` tinytext NOT NULL,
   `spell_text` text DEFAULT NULL,
   `damage_type` tinytext NOT NULL,
-  `damage` tinyint(4) NOT NULL,
-  `save` tinyint(4) NOT NULL
+  `damage` tinytext NOT NULL,
+  `save` tinytext NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
