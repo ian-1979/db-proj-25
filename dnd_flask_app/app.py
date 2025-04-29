@@ -579,7 +579,8 @@ def login():
             # Later: add role field here when it's in the table
             return redirect(url_for('index'))
         else:
-            return "Invalid username or password", 401
+            #return "Invalid username or password", 401
+            return render_template('login.html', error="Invalid username or password")
 
     return render_template('login.html')
 
