@@ -3,40 +3,6 @@
 <div class="container mt-5">
   <h2 class="mb-4">Campaign Management</h2>
 
-  <!-- Dropdown to quickly switch campaigns -->
-  {% if campaigns %}
-  <form method="POST" action="/selectcampaign">
-    <div class="mb-3">
-      <label for="campaign_id" class="form-label">Quick Select Campaign</label>
-      <select name="campaign_id" id="campaign_id" class="form-select" required>
-        <option value="">-- Select --</option>
-        {% for campaign in campaigns %}
-        <div class="list-group-item">
-        <h5>{{ campaign[1] }}</h5>
-
-        {% if campaign[2] %}
-        <p class="text-muted">{{ campaign[2] }}</p>
-        {% endif %}
-
-        <div class="mt-2">
-            <a class="btn btn-sm btn-primary me-2" href="/selectcampaigndirect/{{ campaign[0] }}">Enter Campaign</a>
-
-            {% if session.get('campaign_role') == 'dm' %}
-            <a class="btn btn-sm btn-secondary" href="/addplayer/{{ campaign[0] }}">Add Player</a>
-            {% endif %}
-        </div>
-        </div>
-        {% endfor %}
-
-
-      </select>
-    </div>
-    <button type="submit" class="btn btn-primary">Enter Campaign</button>
-  </form>
-  {% endif %}
-
-  <hr class="my-5">
-
   <h3>Your Campaigns</h3>
 
   {% if campaigns %}

@@ -219,7 +219,7 @@ def edit_notecard(notecard_id):
                 ['race', 'level', 'class', 'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'],
                 entity
             ))
-        # 🔥 Load all spells and known spells
+        # Load all spells and known spells
         cursor.execute("SELECT id, name FROM notecard WHERE type = 'spell' AND campaign_id = %s", (session['campaign_id'],))
         all_spells = cursor.fetchall()
         cursor.execute("SELECT spell_id FROM entity_spell WHERE entity_id = %s", (notecard_id,))

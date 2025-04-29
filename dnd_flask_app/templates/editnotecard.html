@@ -14,11 +14,11 @@
     <div class="mb-3">
       <label for="type" class="form-label">Type</label>
       <select name="type" class="form-select" id="type" required>
-        <option value="character" {% if card.type == 'character' %}selected{% endif %}>Character</option>
-        <option value="monster" {% if card.type == 'monster' %}selected{% endif %}>Monster</option>
-        <option value="npc" {% if card.type == 'npc' %}selected{% endif %}>NPC</option>
-        <option value="location" {% if card.type == 'location' %}selected{% endif %}>Location</option>
-        <option value="spell" {% if card.type == 'spell' %}selected{% endif %}>Spell</option>
+        <option value="character" {% if card.type=='character' %}selected{% endif %}>Character</option>
+        <option value="monster" {% if card.type=='monster' %}selected{% endif %}>Monster</option>
+        <option value="npc" {% if card.type=='npc' %}selected{% endif %}>NPC</option>
+        <option value="location" {% if card.type=='location' %}selected{% endif %}>Location</option>
+        <option value="spell" {% if card.type=='spell' %}selected{% endif %}>Spell</option>
       </select>
     </div>
 
@@ -33,7 +33,8 @@
     </div>
 
     <div class="form-check mb-3">
-      <input class="form-check-input" type="checkbox" name="public" id="public" value="1" {% if card.public %}checked{% endif %}>
+      <input class="form-check-input" type="checkbox" name="public" id="public" value="1" {% if card.public %}checked{%
+        endif %}>
       <label class="form-check-label" for="public">
         Make Public
       </label>
@@ -48,35 +49,35 @@
     </div>
     <div class="mb-3">
       <label class="form-label">Level / CR</label>
-      <input type="number" class="form-control" name="level" value="{{ extra.level if extra.level is defined else '' }}">
+      <input type="number" class="form-control" name="level"
+        value="{{ extra.level if extra.level is defined else '' }}">
     </div>
     <div class="mb-3">
       <label class="form-label">Class (optional)</label>
       <input type="text" class="form-control" name="class" value="{{ extra.class if extra.class is defined else '' }}">
     </div>
-
     <!-- Extra Fields Section -->
     <div id="extra-fields">
-      {% if card.type is %}
-      <!-- Character Fields -->
-      <div id="character-fields" class="extra-type" style="display:none;">
+      {% if card.type|lower == 'character' %}
+      <div id="character-fields" class="extra-type">
         <h5 class="mt-4">Character Details</h5>
         <div class="mb-3">
           <label class="form-label">Race</label>
-          <input type="text" class="form-control" name="race" value="{{ extra.race }}">
+          <input type="text" class="form-control" name="race" value="{{ extra.race if extra.race is defined else '' }}">
         </div>
         <div class="mb-3">
           <label class="form-label">Level</label>
-          <input type="number" class="form-control" name="level" value="{{ extra.level }}">
+          <input type="number" class="form-control" name="level" value="{{ extra.level if extra.level is defined else '' }}">
         </div>
         <div class="mb-3">
           <label class="form-label">Class (optional)</label>
-          <input type="text" class="form-control" name="class" value="{{ extra.class }}">
+          <input type="text" class="form-control" name="class" value="{{ extra.class if extra.class is defined else '' }}">
         </div>
         {% include 'include/stats_fields.html' %}
         {% include 'include/spellSearch.html' %}
       </div>
-
+      {% endif %}
+      {% if card.type|lower == 'monster' %}
       <!-- Monster Fields -->
       <div id="monster-fields" class="extra-type" style="display:none;">
         <h5 class="mt-4">Monster Details</h5>
@@ -87,7 +88,8 @@
         {% include 'include/stats_fields.html' %}
         {% include 'include/spellSearch.html' %}
       </div>
-
+      {% endif %}
+      {% if card.type|lower == 'npc' %}
       <!-- NPC Fields -->
       <div id="npc-fields" class="extra-type" style="display:none;">
         <h5 class="mt-4">NPC Details</h5>
@@ -105,90 +107,67 @@
         </div>
         {% include 'include/stats_fields.html' %}
         {% include 'include/spellSearch.html' %}
-
       </div>
+      {% endif %}
+    </div>
 
-      <!-- Spell Fields -->
-      <div id="spell-fields" class="extra-type" style="display:none;">
-        <h5 class="mt-4">Spell Details</h5>
-        <div class="mb-3">
-          <label class="form-label">Level</label>
-          <input type="number" min="0" max="9" class="form-control" name="spell_level" value="{{ extra.spell_level }}">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">School</label>
-          <input type="text" class="form-control" name="school" value="{{ extra.school }}">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Description Text</label>
-          <textarea class="form-control" name="spell_description">{{ extra.spell_text }}</textarea>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Damage Type (optional)</label>
-          <input type="text" class="form-control" name="damage_type" value="{{ extra.damage_type }}">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Damage (optional)</label>
-          <input type="text" class="form-control" name="damage" value="{{ extra.damage }}">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Save (optional)</label>
-          <input type="text" class="form-control" name="save" value="{{ extra.save }}">
-        </div>
+    {% if card.type|lower == 'location' %}
+    <!-- Location Fields -->
+    <div id="location-fields" class="extra-type" style="display:none;">
+      <h5 class="mt-4">Location Details</h5>
+      <div class="mb-3">
+        <label class="form-label">Location Type</label>
+        <input type="text" class="form-control" name="location_type" value="{{ extra.location_type }}">
       </div>
+    </div>
 
-      <!-- Location Fields -->
-      <div id="location-fields" class="extra-type" style="display:none;">
-        <h5 class="mt-4">Location Details</h5>
-        <div class="mb-3">
-          <label class="form-label">Location Type</label>
-          <input type="text" class="form-control" name="location_type" value="{{ extra.location_type }}">
-        </div>
-      </div>
+</div>
+{% endif %}
+{% endif %}
 
-    </div>
-    {% endif %}
-    {% endif %}
+{% if card.type|lower == 'spell' %}
+<h5 class="mt-4">Spell Details</h5>
+<div class="mb-3">
+  <label class="form-label">Spell Level</label>
+  <input type="number" min="0" max="9" class="form-control" name="spell_level"
+    value="{{ extra.spell_level if extra.spell_level is defined else '' }}">
+</div>
+<div class="mb-3">
+  <label class="form-label">School</label>
+  <input type="text" class="form-control" name="school" value="{{ extra.school if extra.school is defined else '' }}">
+</div>
+<div class="mb-3">
+  <label class="form-label">Spell Description</label>
+  <textarea class="form-control"
+    name="spell_description">{{ extra.spell_text if extra.spell_text is defined else '' }}</textarea>
+</div>
+<div class="mb-3">
+  <label class="form-label">Damage Type (optional)</label>
+  <input type="text" class="form-control" name="damage_type"
+    value="{{ extra.damage_type if extra.damage_type is defined else '' }}">
+</div>
+<div class="mb-3">
+  <label class="form-label">Damage (optional)</label>
+  <input type="text" class="form-control" name="damage" value="{{ extra.damage if extra.damage is defined else '' }}">
+</div>
+<div class="mb-3">
+  <label class="form-label">Save (optional)</label>
+  <input type="text" class="form-control" name="save" value="{{ extra.save if extra.save is defined else '' }}">
+</div>
+{% endif %}
 
-    {% if card.type == 'spell' %}
-    <h5 class="mt-4">Spell Details</h5>
-    <div class="mb-3">
-      <label class="form-label">Spell Level</label>
-      <input type="number" min="0" max="9" class="form-control" name="spell_level" value="{{ extra.spell_level if extra.spell_level is defined else '' }}">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">School</label>
-      <input type="text" class="form-control" name="school" value="{{ extra.school if extra.school is defined else '' }}">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Spell Description</label>
-      <textarea class="form-control" name="spell_description">{{ extra.spell_text if extra.spell_text is defined else '' }}</textarea>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Damage Type (optional)</label>
-      <input type="text" class="form-control" name="damage_type" value="{{ extra.damage_type if extra.damage_type is defined else '' }}">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Damage (optional)</label>
-      <input type="text" class="form-control" name="damage" value="{{ extra.damage if extra.damage is defined else '' }}">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Save (optional)</label>
-      <input type="text" class="form-control" name="save" value="{{ extra.save if extra.save is defined else '' }}">
-    </div>
-    {% endif %}
+{% if card.type|lower == 'location' %}
+<h5 class="mt-4">Location Details</h5>
+<div class="mb-3">
+  <label class="form-label">Location Type</label>
+  <input type="text" class="form-control" name="location_type"
+    value="{{ extra.location_type if extra.location_type is defined else '' }}">
+</div>
+{% endif %}
 
-    {% if card.type == 'location' %}
-    <h5 class="mt-4">Location Details</h5>
-    <div class="mb-3">
-      <label class="form-label">Location Type</label>
-      <input type="text" class="form-control" name="location_type" value="{{ extra.location_type if extra.location_type is defined else '' }}">
-    </div>
-    {% endif %}
+<button type="submit" class="btn btn-success mt-4">Save Changes</button>
 
-    <button type="submit" class="btn btn-success mt-4">Save Changes</button>
-
-  </form>
+</form>
 
 </div>
 
