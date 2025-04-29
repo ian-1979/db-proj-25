@@ -2,20 +2,18 @@
 {% block content %}
 
 <div class="container mt-5">
-  <h2>Edit Notecard</h2>
+  <h2 class="mb-4">Edit Notecard</h2>
 
-  <form method="POST" enctype="multipart/form-data">
-
-    <!-- Base Fields -->
+  <form action="/editnotecard/{{ card.id }}" method="POST" enctype="multipart/form-data">
+    <!-- Basic Fields -->
     <div class="mb-3">
-      <label class="form-label">Name</label>
-      <input type="text" class="form-control" name="name" value="{{ card.name }}" required>
+      <label for="name" class="form-label">Name</label>
+      <input type="text" class="form-control" name="name" id="name" value="{{ card.name }}" required>
     </div>
 
     <div class="mb-3">
-      <label class="form-label">Type</label>
+      <label for="type" class="form-label">Type</label>
       <select name="type" class="form-select" id="type" required>
-        <option value="">-- Select a Type --</option>
         <option value="character" {% if card.type == 'character' %}selected{% endif %}>Character</option>
         <option value="monster" {% if card.type == 'monster' %}selected{% endif %}>Monster</option>
         <option value="npc" {% if card.type == 'npc' %}selected{% endif %}>NPC</option>
@@ -25,8 +23,13 @@
     </div>
 
     <div class="mb-3">
-      <label class="form-label">Description</label>
-      <textarea class="form-control" name="text" rows="4">{{ card.text }}</textarea>
+      <label for="text" class="form-label">Description</label>
+      <textarea name="text" class="form-control" id="text" rows="4">{{ card.text }}</textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="image" class="form-label">Upload New Image (optional)</label>
+      <input type="file" class="form-control" name="image" id="image" accept="image/*">
     </div>
 
     <div class="form-check mb-3">
@@ -36,13 +39,20 @@
       </label>
     </div>
 
-    <!-- Image Upload -->
+    <!-- Entity/Spell/Location Specific Fields -->
+    {% if card.type in ['character', 'monster', 'npc'] %}
+    <h5 class="mt-4">Entity Details</h5>
     <div class="mb-3">
-      <label class="form-label">Upload New Image (optional)</label>
-      <input class="form-control" type="file" name="image" accept="image/*">
-      {% if card.note_image_path %}
-      <p class="mt-2"><small>Current Image: <a href="{{ card.note_image_path }}" target="_blank">View</a></small></p>
-      {% endif %}
+      <label class="form-label">Race</label>
+      <input type="text" class="form-control" name="race" value="{{ extra.race if extra.race is defined else '' }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Level / CR</label>
+      <input type="number" class="form-control" name="level" value="{{ extra.level if extra.level is defined else '' }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Class (optional)</label>
+      <input type="text" class="form-control" name="class" value="{{ extra.class if extra.class is defined else '' }}">
     </div>
 
     <!-- Extra Fields Section -->
@@ -137,29 +147,48 @@
       </div>
 
     </div>
+    {% endif %}
+    {% endif %}
 
-    <button type="submit" class="btn btn-primary mt-4">Save Changes</button>
+    {% if card.type == 'spell' %}
+    <h5 class="mt-4">Spell Details</h5>
+    <div class="mb-3">
+      <label class="form-label">Spell Level</label>
+      <input type="number" min="0" max="9" class="form-control" name="spell_level" value="{{ extra.spell_level if extra.spell_level is defined else '' }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">School</label>
+      <input type="text" class="form-control" name="school" value="{{ extra.school if extra.school is defined else '' }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Spell Description</label>
+      <textarea class="form-control" name="spell_description">{{ extra.spell_text if extra.spell_text is defined else '' }}</textarea>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Damage Type (optional)</label>
+      <input type="text" class="form-control" name="damage_type" value="{{ extra.damage_type if extra.damage_type is defined else '' }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Damage (optional)</label>
+      <input type="text" class="form-control" name="damage" value="{{ extra.damage if extra.damage is defined else '' }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Save (optional)</label>
+      <input type="text" class="form-control" name="save" value="{{ extra.save if extra.save is defined else '' }}">
+    </div>
+    {% endif %}
+
+    {% if card.type == 'location' %}
+    <h5 class="mt-4">Location Details</h5>
+    <div class="mb-3">
+      <label class="form-label">Location Type</label>
+      <input type="text" class="form-control" name="location_type" value="{{ extra.location_type if extra.location_type is defined else '' }}">
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-success mt-4">Save Changes</button>
+
   </form>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      function updateFields() {
-        var allFields = document.querySelectorAll('.extra-type');
-        allFields.forEach(div => div.style.display = 'none');
-
-        var selected = document.getElementById(document.getElementById('type').value.toLowerCase() + '-fields');
-        if (selected) {
-          selected.style.display = 'block';
-        }
-      }
-
-      var typeSelect = document.getElementById('type');
-      if (typeSelect) {
-        typeSelect.addEventListener('change', updateFields);
-        updateFields();  // Auto-run on load
-      }
-    });
-  </script>
 
 </div>
 

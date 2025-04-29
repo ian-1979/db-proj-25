@@ -98,15 +98,76 @@ def show_notecards():
 def notecard_search():
     if request.method == 'GET':
         return render_template('notecardsearch.html')
+
     if request.method == 'POST':
         name = request.form.get('name', '')
         note_type = request.form.get('type', '')
+        tag = request.form.get('tag', '')
+
         cursor = mysql.connection.cursor()
-        query = "SELECT id, name, type, text FROM notecard WHERE name LIKE %s OR type = %s"
-        cursor.execute(query, [f"%{name}%", note_type])
-        data = cursor.fetchall()
+
+        base_query = """
+            SELECT DISTINCT n.id, n.name, n.type, n.text, n.note_image_path
+            FROM notecard n
+            LEFT JOIN notecard_tag nt ON n.id = nt.note_id
+            LEFT JOIN tag t ON nt.tag_id = t.id
+            WHERE n.campaign_id = %s
+        """
+        conditions = []
+        params = [session['campaign_id']]
+
+        if name:
+            conditions.append("n.name LIKE %s")
+            params.append(f"%{name}%")
+        if note_type:
+            conditions.append("n.type = %s")
+            params.append(note_type)
+        if tag:
+            conditions.append("t.name LIKE %s")
+            params.append(f"%{tag}%")
+
+        if conditions:
+            base_query += " AND " + " AND ".join(conditions)
+
+        cursor.execute(base_query, params)
+        cards = cursor.fetchall()
+
+        extras = {}
+        for card in cards:
+            card_id, name, type_, text, image = card
+            extra = {}
+
+            if type_.lower() in ['character', 'monster', 'npc']:
+                cursor.execute("SELECT race, level, class FROM entity WHERE note_id = %s", (card_id,))
+                entity = cursor.fetchone()
+                if entity:
+                    extra = {
+                        'Race': entity[0],
+                        'Level': entity[1],
+                        'Class': entity[2]
+                    }
+            elif type_.lower() == 'spell':
+                cursor.execute("SELECT level, school, spell_text FROM spells WHERE note_id = %s", (card_id,))
+                spell = cursor.fetchone()
+                if spell:
+                    extra = {
+                        'Spell Level': spell[0],
+                        'School': spell[1],
+                        'Spell Text': spell[2]
+                    }
+            elif type_.lower() == 'location':
+                cursor.execute("SELECT location_type FROM location WHERE note_id = %s", (card_id,))
+                location = cursor.fetchone()
+                if location:
+                    extra = {'Location Type': location[0]}
+
+            if extra:
+                extras[card_id] = extra
+
         cursor.close()
-        return render_template('notecards.html', data=data)
+        return render_template('notecards.html', data=cards, extras=extras)
+
+
 
 
 
@@ -121,6 +182,7 @@ def edit_notecard(notecard_id):
    
 
     cursor = mysql.connection.cursor()
+
     cursor.execute("""
         SELECT id, name, type, text, note_image_path, public
         FROM notecard
@@ -141,7 +203,6 @@ def edit_notecard(notecard_id):
         'public': bool(card_data[5])
     }
 
-    # Now: Load Extra fields depending on Type
     extra = {}
     spells = [] 
 
@@ -154,60 +215,54 @@ def edit_notecard(notecard_id):
         entity = cursor.fetchone()
         
         if entity:
-            extra = {
-                'race': entity[0],
-                'level': entity[1],
-                'class': entity[2],
-                'strength': entity[3],
-                'dexterity': entity[4],
-                'constitution': entity[5],
-                'intelligence': entity[6],
-                'wisdom': entity[7],
-                'charisma': entity[8],
-            }
+            extra = dict(zip(
+                ['race', 'level', 'class', 'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'],
+                entity
+            ))
+        # 🔥 Load all spells and known spells
+        cursor.execute("SELECT id, name FROM notecard WHERE type = 'spell' AND campaign_id = %s", (session['campaign_id'],))
+        all_spells = cursor.fetchall()
+        cursor.execute("SELECT spell_id FROM entity_spell WHERE entity_id = %s", (notecard_id,))
+        known_spells = [row[0] for row in cursor.fetchall()]
+        all_spells = []
+        known_spells = []
+        # Fetch spell IDs associated with this entity
+        cursor.execute("""
+            SELECT spell_id
+            FROM entity_spell
+            WHERE entity_id = %s
+        """, (entity[9],))
+        associated_spell_ids = [row[0] for row in cursor.fetchall()]
+        print("Associated spell IDs:", associated_spell_ids)
 
-            # Fetch spell IDs associated with this entity
-            cursor.execute("""
-                SELECT spell_id
-                FROM entity_spell
-                WHERE entity_id = %s
-            """, (entity[9],))
-            associated_spell_ids = [row[0] for row in cursor.fetchall()]
-            print("Associated spell IDs:", associated_spell_ids)
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            SELECT s.id, n.name
+            FROM spells s
+            JOIN notecard n ON s.note_id = n.id
+            where n.campaign_id = %s
+        """, (session['campaign_id'],))
+        spells = cursor.fetchall()
+        cursor.close()
+        # Format spells for dropdown
+        spells = [{'id': spell[0], 'name': spell[1]} for spell in spells]
 
-            cursor = mysql.connection.cursor()
-            cursor.execute("""
-                SELECT s.id, n.name
-                FROM spells s
-                JOIN notecard n ON s.note_id = n.id
-                where n.campaign_id = %s
-            """, (session['campaign_id'],))
-            spells = cursor.fetchall()
-            cursor.close()
-            # Format spells for dropdown
-            spells = [{'id': spell[0], 'name': spell[1]} for spell in spells]
-
-            extra['spells'] = [spell for spell in spells if spell['id'] in associated_spell_ids]
-            
+        extra['spells'] = [spell for spell in spells if spell['id'] in associated_spell_ids]
+        
 
     elif card['type'] == 'spell':
         cursor.execute("""
             SELECT level, school, spell_text, damage_type, damage, save
-            FROM spells
-            WHERE note_id = %s
+            FROM spells WHERE note_id = %s
         """, (notecard_id,))
         spell = cursor.fetchone()
         if spell:
-            extra = {
-                'spell_level': spell[0],
-                'school': spell[1],
-                'spell_text': spell[2],
-                'damage_type': spell[3],
-                'damage': spell[4],
-                'save': spell[5]
-            }
+            extra = dict(zip(
+                ['spell_level', 'school', 'spell_text', 'damage_type', 'damage', 'save'],
+                spell
+            ))
 
-    elif card['type'] == 'location':
+    if card['type'] == 'location':
         cursor.execute("""
             SELECT location_type
             FROM location
@@ -215,9 +270,7 @@ def edit_notecard(notecard_id):
         """, (notecard_id,))
         location = cursor.fetchone()
         if location:
-            extra = {
-                'location_type': location[0]
-            }
+            extra = {'location_type': location[0]}
 
     cursor.close()
 
@@ -227,9 +280,8 @@ def edit_notecard(notecard_id):
         text = request.form['text']
         public = int(request.form.get('public', 0))
 
-        # Handle image upload
         image = request.files.get('image')
-        note_image_path = card['note_image_path']  # Default to existing
+        note_image_path = card['note_image_path']
         if image and image.filename != '':
             filename = secure_filename(image.filename)
             upload_folder = app.config['UPLOAD_FOLDER']
@@ -242,12 +294,12 @@ def edit_notecard(notecard_id):
         cursor = mysql.connection.cursor()
 
         try:
-            # Update notecard table
             cursor.execute("""
                 UPDATE notecard
                 SET name = %s, type = %s, text = %s, note_image_path = %s, public = %s
                 WHERE id = %s AND campaign_id = %s
             """, (name, note_type, text, note_image_path, public, notecard_id, session['campaign_id']))
+
 
             #this is objectively bad should alter records because thats what were doing. editing a notecard
             # # Delete old type-specific records (simpler and safer)
@@ -255,7 +307,7 @@ def edit_notecard(notecard_id):
             # cursor.execute("DELETE FROM spells WHERE note_id = %s", (notecard_id,))
             # cursor.execute("DELETE FROM location WHERE note_id = %s", (notecard_id,))
 
-            # Re-insert new type-specific data
+
             if note_type.lower() in ['character', 'monster', 'npc']:
                 race = request.form.get('race')
                 level = request.form.get('level') or request.form.get('cr')
@@ -289,6 +341,11 @@ def edit_notecard(notecard_id):
                     for spell_id in spell_ids:
                         connectSpell(entity_id, spell_id)
 
+                cursor.execute("DELETE FROM entity_spell WHERE entity_id = %s", (notecard_id,))
+                selected_spells = request.form.getlist('spells')
+                for spell_id in selected_spells:
+                    cursor.execute("INSERT INTO entity_spell (entity_id, spell_id) VALUES (%s, %s)", (notecard_id, spell_id))
+
             elif note_type.lower() == 'spell':
                 spell_level = request.form.get('spell_level')
                 school = request.form.get('school')
@@ -305,13 +362,13 @@ def edit_notecard(notecard_id):
 
             elif note_type.lower() == 'location':
                 location_type = request.form.get('location_type')
-
                 if location_type:
                     cursor.execute("""
                         UPDATE location
                         SET location_type = %s
                         WHERE note_id = %s
                     """, (location_type, notecard_id))
+
 
             mysql.connection.commit()
             cursor.close()
@@ -323,7 +380,6 @@ def edit_notecard(notecard_id):
             return "Database error updating notecard.", e
 
         return redirect('/notecards')
-
 
     return render_template('editnotecard.html', card=card, extra=extra, spells=spells)
 
